@@ -8,7 +8,7 @@ var server = http.createServer(function(request, response) {
     response.end(404, '');
 });
 
-var port = 1338;//process.env.PORT || 1337;
+var port = process.env.PORT || 1337;
 
 server.listen(port, function() {
     console.log('SERVER IS STARTED on port:', port);
@@ -75,6 +75,8 @@ var TANK_VARIATIONS = [
         recoilTime: GUN_RECOIL / 0.7
     }
 ];
+
+var MESSAGES = [];
 
 /**
  * Добавляем ботов.
@@ -240,6 +242,13 @@ wsServer.on('request', function(request) {
 
                         BULLETS.push(bullet);
                     }
+                    break;
+
+                case 'sendMessage':
+                    MESSAGES.push(data);
+
+
+
                     break;
 
                 default:
