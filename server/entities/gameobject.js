@@ -34,6 +34,10 @@ GameObject.prototype.updatePosition = function() {
     this.position[1 - this.direction % 2] += this.speed * isNegative ? -1 : 1;
 };
 
+GameObject.prototype.getSizeBox = function() {
+
+};
+
 /**
  * Проверяет столкновение по одной оси.
  * @param axis

@@ -1,131 +1,116 @@
 
-var Player = require('./entries/player');
+var Player = require('./entities/player');
 
-function GameLogic() {}
+function GameLogic() {
+
+    this._map = require('./entities/map.js').loadMap(1);
+    this._players = [];
+}
 
 /**
  * @param {WebSocket} socket
  */
 GameLogic.prototype.onConnect = function(socket) {
-    new Player({
+    this._players.push(new Player({
         socket: socket
-    });
+    }));
 };
 
+var EPSILON = 0.01;
+
+/**
+ * Обновление мира.
+ */
 GameLogic.prototype.updateWorld = function() {
-    BULLETS = BULLETS.filter(function(bullet) {
-        updatePosition(bullet);
+    var i;
+    var player;
+    var axis;
+    var delta;
+    var p;
+    var bullets;
 
-        return checkTerrainCollision(bullet);
-    });
+    for (i = 0; i < this._players.length; ++i) {
+        player = this._players[i];
 
-    PLAYERS.forEach(function(player) {
-        if (player.joint && !player.dead) {
+        bullets = player.getBullets();
 
-            if (player.inMove) {
-                currentPosition = _.clone(player.position);
+        for (var j = 0; j < bullets.length; ++j) {
+            var bullet = bullets[j];
 
-                updatePosition(player);
-
-                if (!checkEnvironmentCollision(player)) {
-
-                    switch(player.direction) {
-                        case 0:
-                            player.position[1] = Math.floor(currentPosition[1] - TANK_DIMENSION_2) + TANK_DIMENSION_2;
-                            break;
-
-                        case 1:
-                            player.position[0] = Math.ceil(currentPosition[0] + TANK_DIMENSION_2) - TANK_DIMENSION_2;
-                            break;
-
-                        case 2:
-                            player.position[1] = Math.ceil(currentPosition[1] + TANK_DIMENSION_2) - TANK_DIMENSION_2;
-                            break;
-
-                        case 3:
-                            player.position[0] = Math.floor(currentPosition[0] - TANK_DIMENSION_2) + TANK_DIMENSION_2;
-                            break;
-                    }
-
-                }
-
-                var playerCollision;
-                if (playerCollision = checkPlayerCollision(player)) {
-
-                    switch(player.direction) {
-                        case 0:
-                            player.position[1] = playerCollision.position[1] + TANK_DIMENSION + 0.01;
-                            break;
-
-                        case 1:
-                            player.position[0] = playerCollision.position[0] - TANK_DIMENSION - 0.01;
-                            break;
-
-                        case 2:
-                            player.position[1] = playerCollision.position[1] - TANK_DIMENSION - 0.01;
-                            break;
-
-                        case 3:
-                            player.position[0] = playerCollision.position[0] + TANK_DIMENSION + 0.01;
-                            break;
-                    }
-                }
-            }
-
-            var bulletCollision;
-            if (bulletCollision = checkBulletCollision(player)) {
-                BULLETS.splice(BULLETS.indexOf(bulletCollision), 1);
-
-                player.hp--;
-
-                if (player.hp > 0) {
-                    broadcast({
-                        event: 'hit',
-                        data: {
-                            position: bulletCollision.position
-                        }
-                    });
-
-                    send(player, {
-                        event: 'updateHealth',
-                        data: {
-                            hp: player.hp
-                        }
-                    })
-                } else {
-                    player.death++;
-                    player.dead = true;
-
-                    setTimeout(function() {
-                        respawnPlayer(player);
-
-                    }, PLAYER_RESPAWN_INTERVAL);
-
-                    PLAYERS.some(function(player) {
-                        if (player.id === bulletCollision.by) {
-                            player.kills++;
-                            return true;
-                        }
-                    });
-
-                    send(player, {
-                        event: 'updateHealth',
-                        data: {
-                            hp: 0
-                        }
-                    });
-
-                    broadcast({
-                        event: 'playerDeath',
-                        data: {
-                            dead: player.id,
-                            killer: bulletCollision.by
-                        }
-                    });
-                }
-            }
+            bullet.updatePosition();
         }
-    });
+    }
+
+    for (i = 0; i < this._players.length; ++i) {
+        player = this._players[i];
+
+        var tank = player.getTank();
+
+        if (player.inGame && !tank.isDead) {
+            tank.updatePosition();
+
+            if (this._map.checkCollision(tank)) {
+                // FIXME: Сделать нормальное выравнивание.
+                if (tank.direction === 0 || tank.direction === 2) {
+                    axis = 1;
+                } else {
+                    axis = 0;
+                }
+
+                var roundFunc;
+                var epsilon;
+
+                if (tank.direction === 0 || tank.direction === 3) {
+                    roundFunc = Math.ceil;
+                    delta = tank.size[axis] / 2;
+                    epsilon = EPSILON;
+                } else {
+                    roundFunc = Math.floor;
+                    delta = -tank.size[axis] / 2;
+                    epsilon = -EPSILON;
+                }
+
+                tank.position[axis] = roundFunc(tank.position[axis] + delta) - delta - epsilon;
+            }
+
+            for (p = 0; p <= this._players.length && p !== i; ++p) {
+                var otherPlayer = this._players[p];
+
+                if (player.checkCollision(otherPlayer)) {
+
+                    if (tank.direction === 0 || tank.direction === 2) {
+                        axis = 1;
+                    } else {
+                        axis = 0;
+                    }
+
+                    if (tank.direction === 0 || tank.direction === 3) {
+                        delta = tank.size[axis] + EPSILON;
+                    } else {
+                        delta = -(tank.size[axis] + EPSILON);
+                    }
+
+                    player.position[axis] = otherPlayer.position[axis] + delta;
+                }
+            }
+
+            for (p = 0; p <= this._players.length && p !== i; ++p) {
+
+                bullets = this._players.getBullets();
+
+                for (b = 0; b <= bullets.length; ++b) {
+
+                    //BULLETS.splice(BULLETS.indexOf(bulletCollision), 1);
+
+                    player.decreaseHp();
+                }
+            }
+
+        }
+    }
+
+
+    //checkTerrainCollision(bullet);
 };
 
 GameLogic.prototype.sendUpdates = function() {
@@ -230,59 +215,6 @@ function checkTerrainCollision(bullet) {
     }
 
     return true;
-}
-
-/**
- * Ищет коллизии со стенами.
- * @param {Object} obj
- * @return {boolean}
- */
-function checkEnvironmentCollision(obj) {
-    var posX = obj.position[0];
-    var posY = obj.position[1];
-
-    var posX1 = posX - 0.8;
-    var posX2 = posX + 0.8;
-
-    var posY1 = posY - 0.8;
-    var posY2 = posY + 0.8;
-
-    if (posX1 < 0 || posX2 > MAP_DIMENSION ||
-        posY1 < 0 || posY2 > MAP_DIMENSION) {
-        return false;
-    }
-
-    var cellX1 = Math.floor(posX1);
-    var cellX2 = Math.ceil(posX2);
-
-    var cellY1 = Math.floor(posY1);
-    var cellY2 = Math.ceil(posY2);
-
-    for (var x = cellX1; x < cellX2; ++x) {
-        for (var y = cellY1; y < cellY2; ++y) {
-            var cell = MAP[y][x];
-
-            if (cell !== MAP_CELL_TYPE.EMPTY) {
-                if (!Array.isArray(cell) || cell[1] !== 0) {
-                    return;
-                }
-            }
-        }
-    }
-
-    return true;
-}
-
-function checkPlayerCollision(player) {
-    for (var i = 0; i < PLAYERS.length; ++i) {
-        var otherPlayer = PLAYERS[i];
-
-        if (!otherPlayer.dead && otherPlayer.joint) {
-            if (checkCollision(player, otherPlayer)) {
-                return otherPlayer;
-            }
-        }
-    }
 }
 
 function checkBulletCollision(player) {
