@@ -199,6 +199,11 @@ wsServer.on('request', function(request) {
                                 hp: player.hp
                             }
                         });
+
+                        send(player, {
+                            event: 'newMessages',
+                            data: MESSAGES
+                        });
                     });
 
                     break;
@@ -245,9 +250,22 @@ wsServer.on('request', function(request) {
                     break;
 
                 case 'sendMessage':
-                    MESSAGES.push(data);
+                    var messageInfo = {
+                        message: data,
+                        ts: new Date().getTime(),
+                        id: player.id
+                    };
 
+                    MESSAGES.push(messageInfo);
 
+                    if (MESSAGES.length > 10) {
+                        MESSAGES.shift();
+                    }
+
+                    broadcast({
+                        event: 'newMessages',
+                        data: [messageInfo]
+                    });
 
                     break;
 
