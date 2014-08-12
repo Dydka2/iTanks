@@ -15,6 +15,8 @@ function GameObject(initParams) {
     this.size = _.clone(initParams.size || [0, 0]);
 }
 
+_.extend(GameObject.prototype, require('events').EventEmitter);
+
 /**
  * Проверка на столкновение объектов.
  * @param {Object} object
@@ -34,8 +36,16 @@ GameObject.prototype.updatePosition = function() {
     this.position[1 - this.direction % 2] += this.speed * isNegative ? -1 : 1;
 };
 
-GameObject.prototype.getSizeBox = function() {
 
+/**
+ * Передвинуть объект вперед.
+ * @param {number} distance
+ */
+GameObject.prototype.moveForward = function(distance) {
+    var axis = (this.direction === 0 || this.direction === 2 ? 1 : 0);
+    var isNegative = (this.direction === 0 || this.direction === 3);
+
+    bullet.position[axis] += distance * (isNegative ? -1 : 1);
 };
 
 /**

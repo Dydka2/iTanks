@@ -31,6 +31,10 @@ function Player(initParams) {
 Player.prototype.login = function(loginParams) {
     this.name = loginParams.name;
     this.inGame = true;
+
+    this.createTank();
+
+    this.emit('tankCreated', this.tank);
 };
 
 /**
@@ -39,6 +43,7 @@ Player.prototype.login = function(loginParams) {
  */
 Player.prototype.createTank = function(tankType) {
     this.tank = new Tank({
+        player: player,
         tankType: tankType
     });
 };
@@ -154,60 +159,6 @@ Player.prototype._login = function(data) {
             }
         });
     });
-};
-
-Players.prototype.decreaseHp = function() {
-    player.hp--;
-
-    if (player.hp > 0) {
-        broadcast({
-            event: 'hit',
-            data: {
-                position: bulletCollision.position
-            }
-        });
-
-        send(player, {
-            event: 'updateHealth',
-            data: {
-                hp: player.hp
-            }
-        })
-    } else {
-        player.death++;
-        player.dead = true;
-
-        setTimeout(function() {
-            respawnPlayer(player);
-
-        }, PLAYER_RESPAWN_INTERVAL);
-
-        PLAYERS.some(function(player) {
-            if (player.id === bulletCollision.by) {
-                player.kills++;
-                return true;
-            }
-        });
-
-        send(player, {
-            event: 'updateHealth',
-            data: {
-                hp: 0
-            }
-        });
-
-        broadcast({
-            event: 'playerDeath',
-            data: {
-                dead: player.id,
-                killer: bulletCollision.by
-            }
-        });
-    }
-};
-
-Players.prototype.getTank = function() {
-    return this._tank;
 };
 
 module.exports = Player;

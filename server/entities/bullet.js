@@ -5,13 +5,15 @@ var BULLET_SPEED = 0.05;
 var BULLET_SIZE = [0.35, 0.5];
 
 /**
- * @param {Object} initParams
- * @param {number} initParams.direction
- * @param {Array} initParams.position
- * @param {string} initParams.player
+ * @param {Object} [initParams]
+ * @param {number} [initParams.direction=0]
+ * @param {Array} [initParams.position=[0,0]]
+ * @param {Object} [initParams.player]
  * @constructor
  */
 function Bullet(initParams) {
+    initParams = initParams || {};
+
     GameObject.apply(this, {
         direction: initParams.direction,
         position: _.clone(initParams.position),
@@ -19,8 +21,7 @@ function Bullet(initParams) {
         speed: BULLET_SPEED
     });
 
-    this.player = initParams.player;
-    this.ts = new Date().getTime();
+    this.player = initParams.player || null;
 }
 
 Bullet.prototype = Object.create(GameObject.prototype);

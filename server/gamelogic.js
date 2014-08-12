@@ -1,58 +1,101 @@
 
+var EPSILON = 0.001;
+var PLAYER_RESPAWN_INTERVAL = 3000;
+
+var Map = require('./entities/map.js');
 var Player = require('./entities/player');
 
+/**
+ * Класс описывающий игровую логику одного мира.
+ * @constructor
+ */
 function GameLogic() {
+    var that = this;
 
-    this._map = require('./entities/map.js').loadMap(1);
+    this._map = new Map({
+        mapId: 2
+    });
+
+    this._map.on('mapCellUpdate', function(data) {
+        that.broadcast({
+            event: 'mapCellUpdate',
+            data: data
+        });
+    });
+
     this._players = [];
+    this._tanks = [];
+    this._bullets = [];
+
+    this.updateInterval = setInterval(this.updateWorld.bind(this), 23);
+    this.sendInterval = setInterval(this.sendUpdates.bind(this), 7);
 }
+
+GameLogic.prototype.destroy = function() {
+    clearInterval(this.updateInterval);
+    clearInterval(this.sendInterval);
+
+    this._players.forEach(function(player) {
+        player.socket.reject();
+    });
+};
 
 /**
  * @param {WebSocket} socket
  */
 GameLogic.prototype.onConnect = function(socket) {
-    this._players.push(new Player({
-        socket: socket
-    }));
-};
+    var that = this;
 
-var EPSILON = 0.001;
+    var newPlayer = new Player({
+        socket: socket
+    });
+
+    newPlayer.on('tankCreated', function(tank) {
+
+        tank.on('shoot', function(bullet) {
+            that._bullets.push(bullet);
+        });
+
+        tank.on('updateHealth', function(hp) {
+            that.send(tank.player, {
+                event: 'updateHealth',
+                data: {
+                    hp: hp
+                }
+            });
+        });
+
+        that._tanks.push(tank);
+    });
+
+    this._players.push(newPlayer);
+};
 
 /**
  * Обновление мира.
  */
 GameLogic.prototype.updateWorld = function() {
-    var i;
+    var i, j;
     var player;
     var axis;
     var delta;
-    var p;
-    var bullets;
+    var bullet;
 
     var bulletsToDestroy = [];
 
-    for (i = 0; i < this._players.length; ++i) {
-        player = this._players[i];
-
-        bullets = player.getTank().getBullets();
-
-        for (var j = 0; j < bullets.length; ++j) {
-            var bullet = bullets[j];
-
-            bullet.updatePosition();
-        }
+    for (i = 0; i < this._bullets.length; ++i) {
+        bullets[i].updatePosition();
     }
 
-    for (i = 0; i < this._players.length; ++i) {
-        player = this._players[i];
+    for (i = 0; i < this._tanks.length; ++i) {
 
-        var tank = player.getTank();
+        var tank = this._tanks[i];
 
-        if (player.inGame && !tank.isDead) {
+        if (!tank.isDead) {
             tank.updatePosition();
 
             if (this._map.checkCollision(tank)) {
-                // FIXME: Сделать нормальное выравнивание.
+
                 if (tank.direction === 0 || tank.direction === 2) {
                     axis = 1;
                 } else {
@@ -75,14 +118,15 @@ GameLogic.prototype.updateWorld = function() {
                 tank.position[axis] = roundFunc(tank.position[axis] + delta) - delta - epsilon;
             }
 
-            for (p = 0; p <= this._players.length; ++p) {
-                if (p !== i) {
+            for (j = 0; j <= this._tanks.length; ++p) {
+
+                if (j === i) {
                     continue;
                 }
 
-                var otherPlayer = this._players[p];
+                var otherTank = this._tanks[j];
 
-                if (player.checkCollision(otherPlayer)) {
+                if (tank.checkCollision(otherTank)) {
 
                     if (tank.direction === 0 || tank.direction === 2) {
                         axis = 1;
@@ -96,43 +140,62 @@ GameLogic.prototype.updateWorld = function() {
                         delta = -(tank.size[axis] + EPSILON);
                     }
 
-                    player.position[axis] = otherPlayer.position[axis] + delta;
+                    tank.position[axis] = otherTank.position[axis] + delta;
                 }
             }
         }
 
-        for (p = 0; p <= this._players.length; ++p) {
-            if (p !== i) {
-                continue;
-            }
+        for (j = 0; j <= this._bullets.length; ++j) {
 
-            bullets = this._players.getBullets();
+            bullet = this._bullets[j];
 
-            for (b = 0; b <= bullets.length; ++b) {
+            if (tank.checkCollision(bullet)) {
 
-                bullet = bullets[b];
+                if (tank.decreaseHp() === 0) {
 
-                if (player.checkCollision(bullet)) {
-                    player.decreaseHp();
+                    this.setRespawnTankTimer(tank);
 
-                    bulletsToDestroy.push(bullet);
+                    bullet.player.kills++;
+
+                    this.broadcast({
+                        event: 'playerDeath',
+                        data: {
+                            dead: tank.player.id,
+                            killer: bullet.player.id
+                        }
+                    });
+
+                } else {
+                    this.broadcast({
+                        event: 'hit',
+                        data: {
+                            position: bullet.position
+                        }
+                    });
                 }
+
+                bulletsToDestroy.push(bullet);
             }
         }
     }
 
-    for (p = 0; p <= this._players.length; ++p) {
-        bullets = this._players.getBullets();
 
-        for (i = 0; i < bullets.length; ++i) {
+    for (i = 0; i < this._bullets.length; ++i) {
+        bullet = this._bullets[i];
 
-            bullet = bullets[i];
+        var cell;
 
-            if (this._map.checkCollision(bullet)) {
-                bullet.destroy();
+        if (cell = this._map.checkCollision(bullet)) {
+            bulletsToDestroy.push(bullet);
 
-                bulletsToDestroy.push(bullet);
-            }
+            this._map.damageCell(cell);
+
+            this.broadcast({
+                event: 'hit',
+                data: {
+                    position: bullet.position
+                }
+            });
         }
     }
 
@@ -142,145 +205,63 @@ GameLogic.prototype.updateWorld = function() {
         var index = BULLETS.indexOf(bullet);
 
         if (index !== -1) {
+            bullet.explode();
+
             BULLETS = BULLETS.splice(index, 1);
         }
     }
 
 };
 
+/**
+ * Посылает обновления игрокам.
+ */
 GameLogic.prototype.sendUpdates = function() {
-    var players = PLAYERS.filter(jointFilter).filter(notDead).map(function(player) {
-        return {
-            id: player.id,
-            position: player.position,
-            direction: player.direction
-        };
-    });
+    var tanks = [];
+    var bullets = [];
 
-    var bullets = BULLETS.map(function(bullet) {
-        return {
-            position: bullet.position,
-            direction: bullet.direction
-        };
-    });
+    for (var i = 0; i < this._players.length; ++i) {
+        var player = this._players[i];
 
-    var data = {
+        var tank = player.getTank();
+
+        if (player.inGame) {
+            if (!tank.isDead) {
+                tanks.push({
+                    id: player.id,
+                    position: tank.position,
+                    direction: tank.direction
+                });
+            }
+
+            var playerBullets = player.getBullets();
+
+            for (var j = 0; j < playerBullets.length; ++j) {
+                var bullet = playerBullets[j];
+
+                bullets.push({
+                    position: bullet.position,
+                    direction: bullet.direction
+                });
+            }
+        }
+    }
+
+    this.broadcast({
         event: 'updateMapState',
         data: {
-            players: players,
+            tanks: tanks,
             bullets: bullets
         }
-    };
-
-    broadcast(data);
+    });
 };
 
-
-/* ---------- OLD ---------- */
-
-function checkTerrainCollision(bullet) {
-    for (var y = 0; y < MAP_DIMENSION ; ++y) {
-        for (var x = 0; x < MAP_DIMENSION ; ++x) {
-
-            var cell = MAP[y][x];
-
-            if (cell === MAP_CELL_TYPE.HARD || (Array.isArray(cell) && cell[1] > 0)) {
-
-                if (checkCollision(bullet, {
-                    position: [x + 0.5, y + 0.5],
-                    width: 1
-                })) {
-
-                    var cellsToDamage = [[x, y]];
-
-                    if (bullet.direction === 0 || bullet.direction === 2) {
-                        cellsToDamage.push([x - 1, y]);
-                        cellsToDamage.push([x + 1, y]);
-                    } else {
-                        cellsToDamage.push([x, y - 1]);
-                        cellsToDamage.push([x, y + 1]);
-                    }
-
-                    var toBroadcast = [];
-
-                    for (var c = 0; c < cellsToDamage.length; ++c) {
-
-                        var cellPos = cellsToDamage[c];
-                        var x_ = cellPos[0];
-                        var y_ = cellPos[1];
-
-                        if (x_ < 0 || x_ >= MAP_DIMENSION ||
-                            y_ < 0 || y_ >= MAP_DIMENSION) {
-                            continue;
-                        }
-
-                        var cell_ = MAP[y_][x_];
-
-                        if (cell_ === MAP_CELL_TYPE.EMPTY ||
-                            (Array.isArray(cell_) && cell_[1] === 0)) {
-                            break;
-                        }
-
-                        if (cell_ !== MAP_CELL_TYPE.HARD) {
-                            cell_[1]--;
-
-                            toBroadcast.push({
-                                positions: cellPos,
-                                cell: cell_
-                            });
-                        }
-
-                        broadcast({
-                            event: 'hit',
-                            data: {
-                                position: bullet.position
-                            }
-                        });
-                    }
-
-                    broadcast({
-                        event: 'terrainDamage',
-                        data: toBroadcast
-                    });
-
-                    return;
-                }
-            }
-        }
-    }
-
-    return true;
-}
-
-function checkBulletCollision(player) {
-    for (var i = 0; i < BULLETS.length; ++i) {
-        var bullet = BULLETS[i];
-
-        if (bullet.by !== player.id) {
-            if (checkCollision(player, bullet)) {
-                return bullet
-            }
-        }
-    }
-}
-
-function setRandomRespawnPosition(player) {
-    player.position = _.clone(RESPAWNS_POSITIONS[Math.floor(Math.random() * RESPAWNS_POSITIONS.length)]);
-}
-
-setInterval(function() {
-    var timeBack = new Date().getTime() - 10000;
-    BULLETS = BULLETS.filter(function(bullet) {
-        return bullet.ts > timeBack;
-    });
-}, 2000);
-
 /**
- * Отправить сообщение одному пользователю.
- * @param {PLAYER} player
+ * Отправить сообщение одному игроку.
+ * @param {Player} player
  * @param {Object} data
  */
-function send(player, data) {
+GameLogic.prototype.send = function(player, data) {
     var json;
 
     try {
@@ -290,25 +271,25 @@ function send(player, data) {
         return;
     }
 
-    if (player.socket) {
+    if (player.inGame) {
         player.socket.send(json);
     }
-}
+};
 
 /**
  * Отправляет сообщение всем игрокам.
- * @param data
+ * @param {Object} data
  */
-function broadcast(data) {
-    broadcastExcept(null, data);
-}
+GameLogic.prototype.broadcast = function(data) {
+    this.broadcastExcept(null, data);
+};
 
 /**
  * Отправляет сообщение всем игрокам за исключением одного.
  * @param {Object} data
  * @param {Player} [except]
  */
-function broadcastExcept(except, data) {
+GameLogic.prototype.broadcastExcept = function(except, data) {
     var json;
 
     try {
@@ -318,11 +299,11 @@ function broadcastExcept(except, data) {
         return;
     }
 
-    PLAYERS.forEach(function(player) {
-        if (player.joint && player !== except) {
-            if (player.socket) {
-                player.socket.send(json);
-            }
+    for (var i = 0; i < this._players.length; ++i) {
+        var player = this._players[i];
+
+        if (player.inGame && player !== except) {
+            player.socket.send(json);
         }
-    });
-}
+    }
+};
