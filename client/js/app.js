@@ -18,8 +18,6 @@
         T.tankSize = [ T.scale*T.cellWidth*1.7, T.scale*T.cellWidth*1.7 ];
         T.bulletSize = [ 6, 10 ];
 
-        T.Chat.init();
-
         T.App.loadResources().then(function() {
             T.Transport.initSocket(function() {
                 var login = T.getForcedName();
@@ -51,7 +49,10 @@
                 .on('updateHealth', T.updateHP)
                 .on('terrainDamage', T.terrainDamage);
 
-            T.Chat.init();
+            T.Chat.init({
+                node: $('.b-messages')[0]
+            });
+
         });
 
         jQuery(T.App.onDomReady);
