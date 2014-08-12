@@ -596,7 +596,7 @@ T.processTouch = function(e) {
         var port = T.getPort();
 
         var pageUrl = /^https?:\/\/([^:/]*)[:/]/.exec(location.href)[1];
-        var url = "ws://" + pageUrl + ":" + (port || "1337") + "/game";
+        var url = "ws://" + pageUrl + ":" + (port || "1338") + "/game";
 
         var socket = T.socket = new WebSocket(url);
 

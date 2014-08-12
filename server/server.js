@@ -8,7 +8,7 @@ var server = http.createServer(function(request, response) {
     response.end(404, '');
 });
 
-var port = process.env.PORT || 1337;
+var port = 1338;//process.env.PORT || 1337;
 
 server.listen(port, function() {
     console.log('SERVER IS STARTED on port:', port);
@@ -100,7 +100,7 @@ setInterval(function() {
     });
 }, 1000);
 
-var MAP = require('../maps/map_2.js');
+var MAP = require('./maps/map_2.js');
 var RESPAWNS_POSITIONS = [];
 
 for (var x = 0; x < MAP_DIMENSION; ++x) {
