@@ -170,14 +170,20 @@ wsServer.on('request', function(request) {
 
                         send(player, {
                             event: 'playerList',
-                            data: PLAYERS.filter(jointFilter).map(function(player) {
-                                return {
-                                    id: player.id,
-                                    name: player.name,
-                                    color: player.color,
-                                    kills: player.kills,
-                                    deaths: player.deaths
+                            data: PLAYERS.filter(jointFilter).map(function(pl) {
+                                var playerInfo = {
+                                    id: pl.id,
+                                    name: pl.name,
+                                    color: pl.color,
+                                    kills: pl.kills,
+                                    deaths: pl.deaths
                                 };
+
+                                if (playerInfo.id === player.id) {
+                                    playerInfo.me = true;
+                                }
+
+                                return playerInfo;
                             })
                         });
 
@@ -195,6 +201,7 @@ wsServer.on('request', function(request) {
                         send(player, {
                             event: 'details',
                             data: {
+                                id: player.id,
                                 map: MAP,
                                 hp: player.hp,
                                 now: new Date().getTime()
