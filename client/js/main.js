@@ -38,54 +38,6 @@ if (UA.indexOf('iPad') > -1) {
     T.iPad = true;
 }
 
-/**
- * Загружает ресурсы текстур
- * @returns {Vow.Promise}
- */
-T.loadResources = function() {
-    var pathPrefix = 'images/';
-
-    var resources = [
-        'tank_yellow.png',
-        'tank_green.png',
-        'tank_blue.png',
-        'tank_red.png',
-        'tank_brown.png',
-        'tank_gray.png',
-        'tank_lblue.png',
-        'tank_orange.png',
-        'tank_purple.png',
-
-        'brick.png',
-        'cement.png',
-        'missile.png',
-        'explosion.png',
-        'brick_broken.png',
-
-        'heart.png',
-        'heart_none.png',
-    ];
-
-    var promises = _.map(resources, function(file) {
-        var deferred = new vow.Deferred();
-
-        var image = new Image();
-        image.src = pathPrefix + file;
-        image.onload = function() {
-            deferred.resolve(image);
-            T.textures[file.split('.')[0]] = image;
-            console.log('Image ' + image.src + ' loaded successfully');
-        };
-
-        image.onerror = function() {
-            deferred.reject('Image ' + image.src + ' not loaded!');
-            console.error('Image ' + image.src + ' not loaded!');
-        };
-        return deferred.promise();
-    });
-
-    return vow.all(promises);
-};
 
 /**
  * Рисует ячейку карты
@@ -361,15 +313,6 @@ T.getForcedName = function() {
     return null;
 };
 
-T.getPort = function() {
-    var parsed = /\?.*port=([^&]*)/.exec(location.href);
-    if (parsed && parsed.length === 2) {
-        return parsed[1];
-    }
-
-    return null;
-};
-
 T.isGridEnabled = function() {
     var parsed = /\?.*grid/.exec(location.href);
     if (parsed && parsed.length) {
@@ -482,7 +425,7 @@ T.updateHP = function(data) {
     });
 
 
-}
+};
 
 T.renderHP = function(hp) {
     T.tankHP = hp;
@@ -492,14 +435,14 @@ T.renderHP = function(hp) {
     for (var i = 0; i < hp; i++) {
         $livesBox.append($template);
     }
-}
+};
 
 T.terrainDamage = function(data) {
     var l = data.length;
     for (var i = 0; i < l; i++) {
         T.renderCell(data[i].cell, data[i].positions[0], data[i].positions[1]);
     }
-}
+};
 
 /**
  * Перерисовка событий на канвасе
@@ -527,9 +470,7 @@ T._processTouch = function(e, pageX, pageY) {
 
 T._processShootTouch = function() {
     console.log('SHOOT');
-    T.socket.send(JSON.stringify({
-        action: 'shoot'
-    }));
+    T.sendAction('shoot');
 };
 
 T._processNavTouch = function(e, x, y, navWidth, navHeight) {
@@ -573,174 +514,3 @@ T.processTouch = function(e) {
         }
     }
 };
-
-(function(){
-    T.cellCount = 26;
-    T.cellWidth = 20;
-    T.cellHeight = 20;
-    T.AREA_WIDTH = T.cellCount * T.cellWidth;
-    T.AREA_HEIGHT = T.cellCount * T.cellHeight;
-    T.bullets = [];
-    T.enemies = [];
-    // кеш для загруженных тектсур
-    T.textures = {};
-    T.gameTime = 0;
-    T.timestampNode = document.querySelector('.timestamp');
-
-    T.scale = 1;
-
-    T.tankSize = [ T.scale*T.cellWidth*1.7, T.scale*T.cellWidth*1.7 ];
-    T.bulletSize = [ 6, 10 ];
-
-    T.loadResources().then(function() {
-        var port = T.getPort();
-
-        var pageUrl = /^https?:\/\/([^:/]*)[:/]/.exec(location.href)[1];
-        var url = "ws://" + pageUrl + ":" + (port || "1337") + "/game";
-
-        var socket = T.socket = new WebSocket(url);
-
-        socket.onopen = function() {
-            console.log('SOCKET OPENED');
-
-            var login = T.getForcedName();
-            if (login) {
-                var pack = JSON.stringify({
-                    action: 'login',
-                    data: {
-                        name: login || 'la-la-la2',
-                        tankType: 1
-                    }
-                });
-
-                console.log('SENDING LOGIN MESSAGE', pack);
-                T.socket.send(pack);
-            }
-        };
-
-        socket.onmessage = function(message) {
-            if (T.blockRefresh) {
-                return;
-            }
-            message = JSON.parse(message.data);
-            switch(message.event) {
-                case 'details':
-                    T.playSound('start');
-                    T.hideLoader();
-                    T.updateMap(message.data.map);
-                    T.renderHP(message.data.hp);
-                    break;
-
-                case 'playerList':
-                    T.updatePlayerList(message.data);
-                    break;
-
-                case 'updateMapState':
-                    T.render(message.data);
-                    break;
-
-                case 'playerJoined':
-                    T.addPlayer(message.data);
-                    break;
-
-                case 'playerLeft':
-                    T.removePlayer(message.data);
-                    break;
-
-                case 'playerDeath':
-                    T.killPlayer(message.data);
-                    console.log('PLAYERDEATH', message.data);
-                    break;
-
-                case 'hit':
-                    T.hitPlayer(message.data);
-                    break;
-
-                case 'updateHealth':
-                    T.updateHP(message.data);
-                    break;
-
-                case 'terrainDamage':
-                    T.terrainDamage(message.data)
-                }
-        };
-
-        socket.onclose = function() {
-            console.log('SOCKET CLOSED');
-        };
-    });
-
-    jQuery(function($) {
-
-        if (T.iPad) {
-            $("html").addClass('ipad');
-        }
-
-        var $bPagNav = $('.b-pad-nav');
-        var $bPadShoot = $('.b-pad-shoot');
-
-        var navWidth = $bPagNav.width();
-        var navHeight = $bPagNav.height();
-
-        $(document).on('tap', function() {
-            return false;
-        });
-
-        $bPagNav.on('touchdown touchmove touchup touchstart', function(e) {
-            T.processTouch(e);
-
-            return false;
-        });
-
-        $bPadShoot.on('touchdown touchmove touchstart', function(e) {
-            T.processTouch(e);
-
-            return false;
-        });
-
-
-        var login = T.getForcedName();
-        if (login) {
-            T.startGame();
-            return;
-        }
-
-        $('form').submit(function(e) {
-            var $form = $(this);
-
-            var $login = $form.find('[name="login"]');
-            var login = $login.val();
-            var tankType = Number($form.find('[name="tankType"]:checked').val());
-            console.log('TANKTYPE:', tankType);
-
-            if (!login) {
-                T.hideLoader();
-                $login.addClass('error').focus().one('keydown', function() {
-                    $login.removeClass('error');
-                });
-                return false;
-            }
-
-            // отправляем приветственный пакет
-            if (!T.socket) {
-                console.error('Сокет не открыт! Не могу отправить данные игрока.');
-            }
-
-            T.showLoader();
-
-            var pack = JSON.stringify({
-                action: 'login',
-                data: {
-                    name: login,
-                    tankType: tankType
-                }
-            });
-            console.log('SENDING LOGIN MESSAGE', pack);
-            T.socket.send(pack);
-            T.startGame();
-
-            e.preventDefault();
-        });
-    });
-
-})();

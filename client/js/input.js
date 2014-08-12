@@ -2,13 +2,10 @@
 
 T.sendDirection = function(direction, inMove) {
     if (direction !== undefined) {
-        T.socket.send(JSON.stringify({
-            action: 'updateState',
-            data: {
-                direction: direction,
-                inMove: inMove
-            }
-        }));
+        T.sendAction('updateState', {
+            direction: direction,
+            inMove: inMove
+        });
     }
 };
 
@@ -76,9 +73,7 @@ T.sendPosition = function(key, isPressed) {
     }
 
     if (shoot) {
-        T.socket.send(JSON.stringify({
-            action: 'shoot'
-        }));
+        T.sendAction('shoot');
     }
 };
 
