@@ -196,7 +196,8 @@ wsServer.on('request', function(request) {
                             event: 'details',
                             data: {
                                 map: MAP,
-                                hp: player.hp
+                                hp: player.hp,
+                                now: new Date().getTime()
                             }
                         });
 
@@ -262,7 +263,7 @@ wsServer.on('request', function(request) {
                         MESSAGES.shift();
                     }
 
-                    broadcast({
+                    broadcastExpect(player, {
                         event: 'newMessages',
                         data: [messageInfo]
                     });
