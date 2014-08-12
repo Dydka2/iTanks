@@ -2,7 +2,7 @@
 
 T.sendDirection = function(direction, inMove) {
     if (direction !== undefined) {
-        T.sendAction('updateState', {
+        T.Transport.sendAction('updateState', {
             direction: direction,
             inMove: inMove
         });
@@ -73,7 +73,7 @@ T.sendPosition = function(key, isPressed) {
     }
 
     if (shoot) {
-        T.sendAction('shoot');
+        T.Transport.sendAction('shoot');
     }
 };
 

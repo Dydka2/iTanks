@@ -470,7 +470,7 @@ T._processTouch = function(e, pageX, pageY) {
 
 T._processShootTouch = function() {
     console.log('SHOOT');
-    T.sendAction('shoot');
+    T.Transport.sendAction('shoot');
 };
 
 T._processNavTouch = function(e, x, y, navWidth, navHeight) {
