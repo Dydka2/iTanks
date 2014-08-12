@@ -40,6 +40,7 @@
                     T.hideLoader();
                     T.updateMap(data.map);
                     T.renderHP(data.hp);
+                    T.updateTimeDelta(data.now);
                 })
                 .on('playerList', T.updatePlayerList)
                 .on('updateMapState', T.render)

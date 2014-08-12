@@ -514,3 +514,7 @@ T.processTouch = function(e) {
         }
     }
 };
+
+T.updateTimeDelta = function(serverNow) {
+    T.timestampDelta = Date.now() - serverNow;
+};
