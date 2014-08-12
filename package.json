@@ -18,7 +18,8 @@
   "homepage": "https://github.com/mishk0/itanks",
   "dependencies": {
     "vow": "~0.4.5",
-    "lodash": "~2.4.1"
+    "lodash": "~2.4.1",
+    "websocket": "^1.0.8"
   },
   "devDependencies": {
     "gulp": "~3.8.7",
