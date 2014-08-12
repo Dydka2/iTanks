@@ -206,4 +206,8 @@ Players.prototype.decreaseHp = function() {
     }
 };
 
+Players.prototype.getTank = function() {
+    return this._tank;
+};
+
 module.exports = Player;

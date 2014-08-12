@@ -15,11 +15,12 @@ function Bullet(initParams) {
     GameObject.apply(this, {
         direction: initParams.direction,
         position: _.clone(initParams.position),
-        size: BULLET_SIZE
+        size: BULLET_SIZE,
+        speed: BULLET_SPEED
     });
 
-    this.speed = BULLET_SPEED;
     this.player = initParams.player;
+    this.ts = new Date().getTime();
 }
 
 Bullet.prototype = Object.create(GameObject.prototype);

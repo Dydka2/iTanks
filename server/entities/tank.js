@@ -1,6 +1,7 @@
 
 var _ = require('lodash');
 var GameObject = require('./gameobject');
+var Bullet = require('./bullet');
 
 var TANK_SIZE = [1.6, 1.6];
 var BASE_TANK_SPEED = 0.025;
@@ -43,6 +44,7 @@ var DEFAULT_PLAYER = {
 /**
  * @param {Object} initParams
  * @param {number} initParams.tankType
+ * @param {number} initParams.tankType
  * @constructor
  */
 function Tank(initParams) {
@@ -56,6 +58,7 @@ function Tank(initParams) {
         throw new Error('DEBUG TANK TYPE');
     }
 
+    this._bullets = [];
     this.tankType = initParams.tankType;
 
     _.extend(this, TANK_TYPES[tankType]);
@@ -69,16 +72,11 @@ Tank.prototype.tryShoot = function() {
     if (!player.dead && (player.lastShootTS + player.recoilTime < now)) {
         player.lastShootTS = now;
 
-        var bullet = {
-            objType: 'bullet',
-            position: _.clone(player.position),
-            direction: player.direction,
-            speed: player.bulletSpeed,
-            width: BULLET_DIMENSION,
-            ts: now,
-            id: getUniqId(),
-            by: player.id
-        };
+        var bullet = new Bullet({
+            position: this.position,
+            direction: this.direction,
+            player: ''
+        });
 
         switch(bullet.direction) {
             case 0:
@@ -95,8 +93,12 @@ Tank.prototype.tryShoot = function() {
                 break;
         }
 
-        BULLETS.push(bullet);
+        this._bullets.push(bullet);
     }
+};
+
+Tank.prototype.getBullets = function() {
+    return this._bullets;
 };
 
 Tank.prototype.respawn = function(callback) {

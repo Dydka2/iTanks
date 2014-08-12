@@ -16,7 +16,7 @@ GameLogic.prototype.onConnect = function(socket) {
     }));
 };
 
-var EPSILON = 0.01;
+var EPSILON = 0.001;
 
 /**
  * Обновление мира.
@@ -29,10 +29,12 @@ GameLogic.prototype.updateWorld = function() {
     var p;
     var bullets;
 
+    var bulletsToDestroy = [];
+
     for (i = 0; i < this._players.length; ++i) {
         player = this._players[i];
 
-        bullets = player.getBullets();
+        bullets = player.getTank().getBullets();
 
         for (var j = 0; j < bullets.length; ++j) {
             var bullet = bullets[j];
@@ -73,7 +75,11 @@ GameLogic.prototype.updateWorld = function() {
                 tank.position[axis] = roundFunc(tank.position[axis] + delta) - delta - epsilon;
             }
 
-            for (p = 0; p <= this._players.length && p !== i; ++p) {
+            for (p = 0; p <= this._players.length; ++p) {
+                if (p !== i) {
+                    continue;
+                }
+
                 var otherPlayer = this._players[p];
 
                 if (player.checkCollision(otherPlayer)) {
@@ -93,24 +99,53 @@ GameLogic.prototype.updateWorld = function() {
                     player.position[axis] = otherPlayer.position[axis] + delta;
                 }
             }
+        }
 
-            for (p = 0; p <= this._players.length && p !== i; ++p) {
-
-                bullets = this._players.getBullets();
-
-                for (b = 0; b <= bullets.length; ++b) {
-
-                    //BULLETS.splice(BULLETS.indexOf(bulletCollision), 1);
-
-                    player.decreaseHp();
-                }
+        for (p = 0; p <= this._players.length; ++p) {
+            if (p !== i) {
+                continue;
             }
 
+            bullets = this._players.getBullets();
+
+            for (b = 0; b <= bullets.length; ++b) {
+
+                bullet = bullets[b];
+
+                if (player.checkCollision(bullet)) {
+                    player.decreaseHp();
+
+                    bulletsToDestroy.push(bullet);
+                }
+            }
         }
     }
 
+    for (p = 0; p <= this._players.length; ++p) {
+        bullets = this._players.getBullets();
 
-    //checkTerrainCollision(bullet);
+        for (i = 0; i < bullets.length; ++i) {
+
+            bullet = bullets[i];
+
+            if (this._map.checkCollision(bullet)) {
+                bullet.destroy();
+
+                bulletsToDestroy.push(bullet);
+            }
+        }
+    }
+
+    for (i = 0; i < bulletsToDestroy.length; ++i) {
+        bullet = bulletsToDestroy[i];
+
+        var index = BULLETS.indexOf(bullet);
+
+        if (index !== -1) {
+            BULLETS = BULLETS.splice(index, 1);
+        }
+    }
+
 };
 
 GameLogic.prototype.sendUpdates = function() {
