@@ -263,7 +263,7 @@ wsServer.on('request', function(request) {
                         MESSAGES.shift();
                     }
 
-                    broadcastExpect(player, {
+                    broadcastExcept(player, {
                         event: 'newMessages',
                         data: [messageInfo]
                     });
