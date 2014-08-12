@@ -20,7 +20,7 @@
 
         T.App.loadResources().then(function() {
             T.Transport.initSocket(function() {
-                var login = T.getForcedName();
+                var login = T.Params.getValue('name');
                 if (login) {
                     T.Transport.sendAction('login', {
                         action: 'login',
@@ -59,31 +59,6 @@
     };
 
     T.App.onDomReady = function($) {
-        if (T.iPad) {
-            $("html").addClass('ipad');
-        }
-
-        var $bPagNav = $('.b-pad-nav');
-        var $bPadShoot = $('.b-pad-shoot');
-
-        var navWidth = $bPagNav.width();
-        var navHeight = $bPagNav.height();
-
-        $(document).on('tap', function() {
-            return false;
-        });
-
-        $bPagNav.on('touchdown touchmove touchup touchstart', function(e) {
-            T.processTouch(e);
-
-            return false;
-        });
-
-        $bPadShoot.on('touchdown touchmove touchstart', function(e) {
-            T.processTouch(e);
-
-            return false;
-        });
 
 
         var login = T.getForcedName();

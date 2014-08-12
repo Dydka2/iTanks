@@ -2,43 +2,6 @@ if (window && !window.T) {
     window.T = {};
 }
 
-((function($) {
-    var IS_IOS = /iphone|ipad/i.test(navigator.userAgent);
-    $.fn.nodoubletapzoom = function() {
-        if (IS_IOS)
-            $(this).bind('touchstart', function preventZoom(e) {
-                var t2 = e.timeStamp
-                    , t1 = $(this).data('lastTouch') || t2
-                    , dt = t2 - t1
-                    , fingers = e.originalEvent.touches.length;
-                $(this).data('lastTouch', t2);
-                if (!dt || dt > 500 || fingers > 1) return; // not double-tap
-
-                e.preventDefault(); // double tap - prevent the zoom
-                // also synthesize click Events we just swallowed up
-                $(this).trigger('click').trigger('click');
-            });
-    };
-
-    $(document).ready(function() {
-        $(document).nodoubletapzoom();
-    })
-})(jQuery));
-
-document.ontouchmove = function(e)
-{
-    return e.preventDefault();
-};
-
-
-
-var UA = navigator.userAgent;
-T.iPad = false;
-if (UA.indexOf('iPad') > -1) {
-    T.iPad = true;
-}
-
-
 /**
  * Рисует ячейку карты
  * @param {Number|Array} cell
@@ -87,7 +50,7 @@ T.renderCell = function(cell, x, y) {
         T.ctx2.drawImage(texture, x * T.cellWidth * T.scale, y * T.cellHeight * T.scale, T.cellWidth * T.scale, T.cellHeight * T.scale);
     }
 
-    if (T.isGridEnabled()) {
+    if (T.Params.isDefined('grid')) {
         T.ctx2.strokeStyle = "rgb(0, 255, 0)";
         T.ctx2.strokeRect(x * T.cellWidth * T.scale, y * T.cellHeight * T.scale, T.cellWidth * T.scale, T.cellHeight * T.scale);
 
@@ -248,6 +211,9 @@ T.updatePlayer = function(player) {
 
 T.addPlayer = function(player, $template, $playerList) {
     T.players.push(player);
+    if (player.me) {
+        T.me = player;
+    }
 
     if (!$template) {
         $template = $('.player-list-item-template');
@@ -302,24 +268,6 @@ T.renderCanvas = function() {
 
     T.ctx = canvas.getContext('2d');
     T.ctx2 = canvas2.getContext('2d');
-};
-
-T.getForcedName = function() {
-    var parsed = /\?.*name=([^&]*)/.exec(location.href);
-    if (parsed && parsed.length === 2) {
-        return parsed[1];
-    }
-
-    return null;
-};
-
-T.isGridEnabled = function() {
-    var parsed = /\?.*grid/.exec(location.href);
-    if (parsed && parsed.length) {
-        return true;
-    }
-
-    return false;
 };
 
 /**
@@ -455,70 +403,3 @@ T.render = function(data) {
     T.renderAnimations(T.animations);
 };
 
-T._processTouch = function(e, pageX, pageY) {
-    var $padNav = $('.b-pad-nav');
-    var offset = $padNav.offset();
-    var width = $padNav.width();
-    var height = $padNav.height();
-
-    if (offset.left < pageX && offset.left + width > pageY) {
-        T._processNavTouch(e, pageX - offset.left, pageY - offset.top, width, height);
-    } else {
-        T._processShootTouch();
-    }
-};
-
-T._processShootTouch = function() {
-    console.log('SHOOT');
-    T.Transport.sendAction('shoot');
-};
-
-T._processNavTouch = function(e, x, y, navWidth, navHeight) {
-    // приводим к центру координат
-    x = x - navWidth / 2;
-    y = y - navHeight / 2;
-
-    var dir;
-    if (x < y) {
-        if (x > -y) {
-            // up
-            dir = 2;
-            console.log('DIRECTION', 'DOWN');
-        } else {
-            // left
-            dir = 3;
-            console.log('DIRECTION', 'LEFT');
-        }
-    } else {
-        if (x < -y) {
-            // down
-            dir = 0;
-            console.log('DIRECTION', 'UP');
-        } else {
-            // right
-            dir = 1;
-            console.log('DIRECTION', 'RIGHT');
-        }
-    }
-
-    T.sendDirection(dir, e.type !== 'touchup');
-};
-
-T.processTouch = function(e) {
-    if (e.originalEvent) {
-        var touches = e.originalEvent.touches;
-        if (touches && touches.length) {
-            _.forEach(touches, function(touch) {
-                T._processTouch(e, touch.pageX, touch.pageY);
-            });
-        }
-    }
-};
-
-T.updateTimeDelta = function(serverNow) {
-    T.timestampDelta = Date.now() - serverNow;
-};
-
-T.serverNow = function() {
-    return Date.now() - T.timestampDelta;
-};
