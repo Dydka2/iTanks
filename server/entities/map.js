@@ -1,4 +1,6 @@
 
+var _ = require('lodash');
+
 /**
  * Создает инстанс определенной карты.
  * @param {Object} initParams
@@ -6,7 +8,7 @@
  * @constructor
  */
 function Map(initParams) {
-    this._loadMap(initParams.mapNumber);
+    this._loadMap(initParams.mapId);
 }
 
 Map.CELL_TYPE = {
@@ -25,7 +27,7 @@ _.extend(Map.prototype, require('events').EventEmitter);
  */
 Map.prototype._loadMap = function(mapNumber) {
 
-    var map = this.map = require('../../maps/map_' + mapNumber + '.js');
+    var map = this.map = require('../maps/map_' + mapNumber + '.js');
     this.respawns = [];
 
     this.rowsCount = map.length;
@@ -89,6 +91,8 @@ Map.prototype.checkCollision = function(object) {
             }
         }
     }
+
+    this.respawnsCount = this.respawns.length;
 };
 
 /**
@@ -106,6 +110,14 @@ Map.prototype.damageCell = function(cell) {
             cell: cellInfo
         });
     }
+};
+
+/**
+ * Возвращает случайную позицию возрождения.
+ * @return {Array}
+ */
+Map.prototype.getRandomRespawn = function() {
+    return this.respawns[Math.floor(Math.random() * this.respawnsCount)];
 };
 
 module.exports = Map;

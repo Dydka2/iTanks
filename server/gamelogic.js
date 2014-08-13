@@ -1,6 +1,7 @@
 
 var EPSILON = 0.001;
 var PLAYER_RESPAWN_INTERVAL = 3000;
+var PLAYER_RESPAWN_TRY_INTERVAL = 100;
 
 var Map = require('./entities/map.js');
 var Player = require('./entities/player');
@@ -69,6 +70,30 @@ GameLogic.prototype.onConnect = function(socket) {
     });
 
     this._players.push(newPlayer);
+};
+
+/**
+ * Устанавливает время возрождения танка.
+ * @param {Tank} tank
+ * @param {number} time
+ */
+GameLogic.prototype.setRespawnTankTimer = function(tank, time) {
+    var that = this;
+
+    tank.respawnTimeout = setTimeout(function() {
+        tank.position = that._map.getRandomRespawn();
+
+        for (var i = 0; i < that._tanks.length; ++i) {
+            var otherTank = that._tanks[i];
+
+            if (!tank.isDead) {
+                if (tank.checkCollision(otherTank)) {
+                    that.setRespawnTankTimer(tank, PLAYER_RESPAWN_TRY_INTERVAL);
+                    break;
+                }
+            }
+        }
+    }, time);
 };
 
 /**
@@ -153,7 +178,7 @@ GameLogic.prototype.updateWorld = function() {
 
                 if (tank.decreaseHp() === 0) {
 
-                    this.setRespawnTankTimer(tank);
+                    this.setRespawnTankTimer(tank, PLAYER_RESPAWN_INTERVAL);
 
                     bullet.player.kills++;
 
@@ -178,7 +203,6 @@ GameLogic.prototype.updateWorld = function() {
             }
         }
     }
-
 
     for (i = 0; i < this._bullets.length; ++i) {
         bullet = this._bullets[i];
@@ -217,38 +241,33 @@ GameLogic.prototype.updateWorld = function() {
  * Посылает обновления игрокам.
  */
 GameLogic.prototype.sendUpdates = function() {
+    var i;
     var tanks = [];
     var bullets = [];
 
-    for (var i = 0; i < this._players.length; ++i) {
-        var player = this._players[i];
+    for (i = 0; i < this._tanks.length; ++i) {
+        var tank = this._tanks[i];
 
-        var tank = player.getTank();
-
-        if (player.inGame) {
-            if (!tank.isDead) {
-                tanks.push({
-                    id: player.id,
-                    position: tank.position,
-                    direction: tank.direction
-                });
-            }
-
-            var playerBullets = player.getBullets();
-
-            for (var j = 0; j < playerBullets.length; ++j) {
-                var bullet = playerBullets[j];
-
-                bullets.push({
-                    position: bullet.position,
-                    direction: bullet.direction
-                });
-            }
+        if (!tank.isDead) {
+            tanks.push({
+                id: player.id,
+                position: tank.position,
+                direction: tank.direction
+            });
         }
     }
 
+    for (i = 0; i < this._bullets.length; ++i) {
+        var bullet = this._bullets[i];
+
+        bullets.push({
+            position: bullet.position,
+            direction: bullet.direction
+        });
+    }
+
     this.broadcast({
-        event: 'updateMapState',
+        event: 'updateGameEntities',
         data: {
             tanks: tanks,
             bullets: bullets
@@ -307,3 +326,5 @@ GameLogic.prototype.broadcastExcept = function(except, data) {
         }
     }
 };
+
+module.exports = GameLogic;

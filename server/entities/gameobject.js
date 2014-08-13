@@ -1,3 +1,6 @@
+
+var _ = require('lodash');
+
 /**
  * Прототип игрового объекта.
  * @param {Object} [initParams]

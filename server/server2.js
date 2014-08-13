@@ -14,7 +14,7 @@ var webSocketServer = new WebSocketServer({
 });
 
 server.listen(process.env.PORT || 1337, function() {
-    console.log('SERVER IS STARTED on port:', port);
+    console.log('SERVER IS STARTED. PORT:', server.address().port);
 
     var game = new GameLogic();
 
