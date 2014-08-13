@@ -266,6 +266,7 @@ T.renderCanvas = function() {
 
     areaNode.appendChild(wrapper);
 
+    debugger;
     T.ctx = canvas.getContext('2d');
     T.ctx2 = canvas2.getContext('2d');
 };
@@ -279,11 +280,14 @@ T.$getPlayerNode = function(playerInfo) {
 };
 
 T.startGame = function() {
-    $('body').addClass('game');
-    $('.b-auth').hide();
-    $('.b-game').show();
-    T.renderCanvas();
-    T.bindEvents();
+    T.Resources.whenResourcesLoaded().then(function() {
+        $('body').addClass('game');
+        $('.b-auth').hide();
+        $('.b-game').show();
+        T.renderCanvas();
+        T.bindEvents();
+    });
+
 };
 
 T.renderAnimations = function(animations) {

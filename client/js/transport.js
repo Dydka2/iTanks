@@ -1,7 +1,12 @@
 (function() {
+    if (window && !window.T) {
+        window.T = {};
+    }
+
     var Transport = T.Transport = {};
 
     var socket;
+    var socketInitDeferred = new vow.Deferred();
 
     Transport._getPort = function() {
         var parsed = /\?.*port=([^&]*)/.exec(location.href);
@@ -14,20 +19,18 @@
 
     Transport._onMessage = function(message) {
         message = JSON.parse(message.data);
-
-        var handlers = Transport._events[message.event];
-        if (handlers && handlers.length) {
-            for (var i = 0; i < handlers.length; i++) {
-                handlers[i].call(null, message.data);
-            }
+        // сохраняем лаг между клиентом и сервером
+        if (message.data.now) {
+            T.Time.updateTimeDelta(message.data.now);
         }
+
+        Transport.trigger(message.event, [message.data]);
     };
 
     /**
      * Инициализируем сокет до сервера
-     * @param {Function} onopen
      */
-    Transport.initSocket = function(onopen) {
+    Transport.initSocket = function() {
         var port = T.Transport._getPort();
 
         var pageUrl = /^https?:\/\/([^:/]*)[:/]/.exec(location.href)[1];
@@ -37,9 +40,7 @@
 
         socket.onopen = function() {
             console.log('SOCKET OPENED');
-            if (_.isFunction(onopen)) {
-                onopen();
-            }
+            socketInitDeferred.resolve(Transport);
         };
 
         socket.onclose = function() {
@@ -48,6 +49,10 @@
 
         // можно использовать addEventListener
         socket.onmessage = Transport._onMessage;
+    };
+
+    Transport.whenTransportReady = function() {
+        return socketInitDeferred.promise();
     };
 
     /**
@@ -73,24 +78,26 @@
         T.Transport._socket.send(JSON.stringify(obj));
     };
 
-    /**
-     * Подписка на события
-     * @param {String} event Название события
-     * @param {Function} callback Обработчик
-     */
-    Transport.on = function(event, callback) {
-        if (!event || !_.isFunction(callback)) {
-            return;
-        }
+    _.extend(Transport, EventEmitter.prototype);
 
-        Transport._events = Transport._events || [];
+    T.Events.on('app-init', function() {
+        Transport.initSocket();
 
-        if (!Transport._events[event]) {
-            Transport._events[event] = [];
-        }
-
-        Transport._events[event].push(callback);
-
-        return Transport;
-    };
+        // FIXME: разнести по компонентам
+        T.Transport
+            .on('details', function(data) {
+                T.playSound('start');
+                T.hideLoader();
+                T.updateMap(data.map);
+                T.renderHP(data.hp);
+            })
+            .on('playerList', T.updatePlayerList)
+            .on('updateMapState', T.render)
+            .on('playerJoined', T.addPlayer)
+            .on('playerLeft', T.removePlayer)
+            .on('playerDeath', T.killPlayer)
+            .on('hit', T.hitPlayer)
+            .on('updateHealth', T.updateHP)
+            .on('terrainDamage', T.terrainDamage);
+    })
 })();

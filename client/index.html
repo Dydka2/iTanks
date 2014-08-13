@@ -19,7 +19,7 @@
 
 <div class="b-auth">
     <h2>iTanks!</h2>
-    <form class="login-form">
+    <form class="login-form" style="display: none">
         <label for="login">
             Your login:
             <input id="login" class="login-input" type="text" name="login" value="" autofocus>
@@ -125,9 +125,15 @@
 <script src="node_modules/vow/lib/vow.js"></script>
 <script src="node_modules/lodash/dist/lodash.js"></script>
 
+<script src="bower_components/eventEmitter/EventEmitter.js"></script>
+
+<!-- общая шина событий, должна грузиться первой -->
+<script src="js/events.js"></script>
 <script src="js/params.js"></script>
 <script src="js/time.js"></script>
 
+<script src="js/userInfo.js"></script>
+<script src="js/resources.js"></script>
 <script src="js/map-common.js"></script>
 <script src="js/transport.js"></script>
 <script src="js/chat.js"></script>

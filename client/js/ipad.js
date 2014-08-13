@@ -73,39 +73,37 @@
 
 
     function iPadInit() {
-        jQuery(function($) {
-            $(document).on('touchstart', function(e) {
-                var t2 = e.timeStamp,
-                    t1 = $(this).data('lastTouch') || t2,
-                    dt = t2 - t1,
-                    fingers = e.originalEvent.touches.length;
+        $(document).on('touchstart', function(e) {
+            var t2 = e.timeStamp,
+                t1 = $(this).data('lastTouch') || t2,
+                dt = t2 - t1,
+                fingers = e.originalEvent.touches.length;
 
-                $(this).data('lastTouch', t2);
-                if (!dt || dt > 500 || fingers > 1) return; // not double-tap
+            $(this).data('lastTouch', t2);
+            if (!dt || dt > 500 || fingers > 1) return; // not double-tap
 
-                e.preventDefault(); // double tap - prevent the zoom
-                // also synthesize click Events we just swallowed up
-                $(this).trigger('click').trigger('click');
-            });
-
-            document.ontouchmove = function(e)
-            {
-                return e.preventDefault();
-            };
-
-            $("html").addClass('ipad');
-
-            $(document).on('tap', function() {
-                return false;
-            });
-
-            $('.b-pad-nav').on('touchdown touchmove touchup touchstart', onTouch);
-            $('.b-pad-shoot').on('touchdown touchmove touchstart', onTouch);
+            e.preventDefault(); // double tap - prevent the zoom
+            // also synthesize click Events we just swallowed up
+            $(this).trigger('click').trigger('click');
         });
+
+        document.ontouchmove = function(e)
+        {
+            return e.preventDefault();
+        };
+
+        $("html").addClass('ipad');
+
+        $(document).on('tap', function() {
+            return false;
+        });
+
+        $('.b-pad-nav').on('touchdown touchmove touchup touchstart', onTouch);
+        $('.b-pad-shoot').on('touchdown touchmove touchstart', onTouch);
     }
 
     var UA = navigator.userAgent;
     if (T.Params.isDefined('ipad') || UA.indexOf('iPad') > -1) {
-        iPadInit();
+        T.Events.on('dom-ready', iPadInit);
     }
 })();

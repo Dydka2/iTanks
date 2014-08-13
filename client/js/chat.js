@@ -20,7 +20,7 @@
         var minutes = date.getMinutes();
 
         var node = this.generateNode(hours, minutes, name, text);
-        this._$node.append(node);
+        this._$messages.append(node);
     };
 
     Chat.getNameById = function(playerId) {
@@ -36,11 +36,12 @@
         return node;
     };
 
-    Chat.init = function(options) {
+    var init = Chat.init = function(options) {
         options = options || {};
 
-        Chat._node = options.node || document;
+        Chat._node = options.node || $('.b-chat');
         Chat._$node = $(Chat._node);
+        Chat._$messages = Chat._$node.find('.b-messages');
 
         T.Transport.on('newMessages', function(data) {
             if (!data || !data.length) {
@@ -53,6 +54,11 @@
             }
         });
     };
+
+    T.Events.on('dom-ready', init);
+    T.Chat.init({
+        node: $('.b-messages')[0]
+    });
 
 })();
 
