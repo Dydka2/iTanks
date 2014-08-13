@@ -69,6 +69,17 @@ GameLogic.prototype.onConnect = function(socket) {
         that._tanks.push(tank);
     });
 
+    newPlayer.on('loged', function() {
+        that.send(newPlayer, {
+            action: 'details',
+            data: {
+                map: that._map.map,
+                baseHp: newPlayer.tank.baseHp,
+                now: new Date().getTime()
+            }
+        });
+    });
+
     this._players.push(newPlayer);
 };
 

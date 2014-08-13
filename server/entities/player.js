@@ -35,6 +35,8 @@ Player.prototype.login = function(loginParams) {
     this.createTank();
 
     this.emit('tankCreated', this.tank);
+
+    this.emit('loged');
 };
 
 /**

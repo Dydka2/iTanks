@@ -41,13 +41,13 @@
                     T.updateTimeDelta(data.now);
                 })
                 .on('playerList', T.updatePlayerList)
-                .on('updateMapState', T.render)
+                .on('updateGameEntities', T.render)
                 .on('playerJoined', T.addPlayer)
                 .on('playerLeft', T.removePlayer)
                 .on('playerDeath', T.killPlayer)
                 .on('hit', T.hitPlayer)
                 .on('updateHealth', T.updateHP)
-                .on('terrainDamage', T.terrainDamage);
+                .on('updateCell', T.terrainDamage);
 
             T.Chat.init({
                 node: $('.b-messages')[0]
