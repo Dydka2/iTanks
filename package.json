@@ -18,7 +18,9 @@
   "dependencies": {
     "vow": "~0.4.5",
     "lodash": "~2.4.1",
-    "websocket": "^1.0.8"
+    "websocket": "^1.0.8",
+    "react": "^0.11.1",
+    "browserify": "^5.10.0"
   },
   "devDependencies": {
     "gulp": "~3.8.7",

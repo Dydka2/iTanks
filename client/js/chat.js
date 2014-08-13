@@ -19,21 +19,18 @@
         var hours = date.getHours();
         var minutes = date.getMinutes();
 
-        var node = this.generateNode(hours, minutes, name, text);
-        this._$node.append(node);
+        this._data.push({
+            hours: hours,
+            minutes: minutes,
+            name: name,
+            text: text
+        });
+
+        this.generateNode(this._data);
     };
 
     Chat.getNameById = function(playerId) {
         return playerId ? _.find(T.players, {id : playerId}).name : "Me";
-    };
-
-    Chat.generateNode = function(hours, minutes, name, text) {
-        var node = $('<div class="b-message">' + hours + ":"
-                     + minutes + " "
-                     + name + " > "
-                     + text + "</div>");
-
-        return node;
     };
 
     Chat.init = function(options) {
@@ -41,6 +38,9 @@
 
         Chat._node = options.node || document;
         Chat._$node = $(Chat._node);
+        Chat._data = [];
+
+        Chat.generateNode(Chat._data);
 
         T.Transport.on('newMessages', function(data) {
             if (!data || !data.length) {
