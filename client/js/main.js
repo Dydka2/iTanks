@@ -57,17 +57,14 @@ T.renderCell = function(cell, x, y) {
         break;
 
     case T.BRICK:
-        texture = T.textures['brick'];
 
-        if (_.isArray(cell)) {
-            if (state === 0) {
-                texture = false;
-            }
-            if (state === 1) {
-                texture = T.textures['brick_broken'];
-            }
+        if (state === 2) {
+            texture = T.textures['brick'];
 
+        } else if (state === 1) {
+            texture = T.textures['brick_broken'];
         }
+
         break;
 
     case T.CEMENT:

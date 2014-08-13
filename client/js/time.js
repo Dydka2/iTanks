@@ -1,3 +1,5 @@
+T = window.T || {};
+
 T.Time = {};
 
 /**
