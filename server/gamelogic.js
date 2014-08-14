@@ -29,7 +29,7 @@ function GameLogic() {
     this._bullets = [];
 
     this.updateInterval = setInterval(this.updateWorld.bind(this), 23);
-    this.sendInterval = setInterval(this.sendUpdates.bind(this), 7);
+    this.sendInterval = setInterval(this.sendUpdates.bind(this), 100);
 }
 
 GameLogic.prototype.destroy = function() {
@@ -55,6 +55,15 @@ GameLogic.prototype.onConnect = function(socket) {
 
         tank.on('shoot', function(bullet) {
             that._bullets.push(bullet);
+
+            bullet.on('explode', function() {
+               broadcast({
+                   event: 'hit',
+                   data: {
+                       position: bullet.position
+                   }
+               })
+            });
         });
 
         tank.on('updateHealth', function(hp) {
@@ -78,6 +87,47 @@ GameLogic.prototype.onConnect = function(socket) {
                 now: new Date().getTime()
             }
         });
+
+        that.send(newPlayer, {
+            event: 'playerList',
+            data: that._players.filter(function(pl) { return pl.inGame; }).map(function(player) {
+                return {
+                    id: player.id,
+                    name: player.name,
+                    color: player.color,
+                    kills: player.kills,
+                    deaths: player.deaths
+                };
+            })
+        });
+
+        that.broadcastExcept(newPlayer, {
+            event: 'playerJoined',
+            data: {
+                id: newPlayer.id,
+                name: newPlayer.name,
+                color: newPlayer.color,
+                kills: newPlayer.kills,
+                deaths: newPlayer.deaths
+            }
+        });
+
+        that.setRespawnTankTimer(newPlayer.tank, 0);
+
+    });
+
+    newPlayer.on('leave', function() {
+        var index = that._players.indexOf(newPlayer);
+        if (index !== -1) {
+            that._players.splice(index, 1);
+        }
+
+        that.broadcast({
+            event: 'playerLeft',
+            data: {
+                id: newPlayer.id
+            }
+        });
     });
 
     this._players.push(newPlayer);
@@ -97,13 +147,15 @@ GameLogic.prototype.setRespawnTankTimer = function(tank, time) {
         for (var i = 0; i < that._tanks.length; ++i) {
             var otherTank = that._tanks[i];
 
-            if (!tank.isDead) {
+            if (!otherTank.isDead) {
                 if (tank.checkCollision(otherTank)) {
                     that.setRespawnTankTimer(tank, PLAYER_RESPAWN_TRY_INTERVAL);
-                    break;
+                    return;
                 }
             }
         }
+
+        tank.isDead = false;
     }, time);
 };
 
@@ -112,7 +164,6 @@ GameLogic.prototype.setRespawnTankTimer = function(tank, time) {
  */
 GameLogic.prototype.updateWorld = function() {
     var i, j;
-    var player;
     var axis;
     var delta;
     var bullet;
@@ -120,7 +171,7 @@ GameLogic.prototype.updateWorld = function() {
     var bulletsToDestroy = [];
 
     for (i = 0; i < this._bullets.length; ++i) {
-        bullets[i].updatePosition();
+        this._bullets[i].updatePosition();
     }
 
     for (i = 0; i < this._tanks.length; ++i) {
@@ -154,7 +205,7 @@ GameLogic.prototype.updateWorld = function() {
                 tank.position[axis] = roundFunc(tank.position[axis] + delta) - delta - epsilon;
             }
 
-            for (j = 0; j <= this._tanks.length; ++p) {
+            for (j = 0; j < this._tanks.length; ++j) {
 
                 if (j === i) {
                     continue;
@@ -181,7 +232,7 @@ GameLogic.prototype.updateWorld = function() {
             }
         }
 
-        for (j = 0; j <= this._bullets.length; ++j) {
+        for (j = 0; j < this._bullets.length; ++j) {
 
             bullet = this._bullets[j];
 
@@ -256,10 +307,11 @@ GameLogic.prototype.sendUpdates = function() {
     var tanks = [];
     var bullets = [];
 
-    for (i = 0; i < this._tanks.length; ++i) {
-        var tank = this._tanks[i];
+    for (i = 0; i < this._players.length; ++i) {
+        var player = this._players[i];
+        var tank = player.getTank();
 
-        if (!tank.isDead) {
+        if (tank && !tank.isDead) {
             tanks.push({
                 id: player.id,
                 position: tank.position,

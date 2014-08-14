@@ -442,7 +442,7 @@ T.terrainDamage = function(data) {
  */
 T.render = function(data) {
     T.ctx.clearRect(0,0,T.AREA_WIDTH,T.AREA_WIDTH);
-    T.renderEntities(data.players);
+    T.renderEntities(data.tanks);
     T.renderEntities(data.bullets, true);
     T.renderAnimations(T.animations);
 };

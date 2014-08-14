@@ -14,11 +14,14 @@ var _ = require('lodash');
 function GameObject(initParams) {
     initParams = initParams || {};
 
+    this.direction = initParams.direction || 0;
     this.position = _.clone(initParams.position || [0, 0]);
     this.size = _.clone(initParams.size || [0, 0]);
+    this.inMove = ('inMove' in initParams ? initParams.inMove : false);
+    this.speed = initParams.speed || 0;
 }
 
-_.extend(GameObject.prototype, require('events').EventEmitter);
+_.extend(GameObject.prototype, require('events').EventEmitter.prototype);
 
 /**
  * Проверка на столкновение объектов.
@@ -34,9 +37,11 @@ GameObject.prototype.checkCollision = function(object) {
 };
 
 GameObject.prototype.updatePosition = function() {
-    var isNegative = this.direction === 0 || this.direction === 3;
+    if (this.inMove) {
+        var isNegative = this.direction === 0 || this.direction === 3;
 
-    this.position[1 - this.direction % 2] += this.speed * isNegative ? -1 : 1;
+        this.position[1 - this.direction % 2] += this.speed * isNegative ? -1 : 1;
+    }
 };
 
 

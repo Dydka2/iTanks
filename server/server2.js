@@ -9,14 +9,14 @@ var server = http.createServer(function(request, response) {
     response.end(404, '');
 });
 
-var webSocketServer = new WebSocketServer({
-    httpServer: server
-});
-
-server.listen(process.env.PORT || 1337, function() {
+server.listen(process.env.PORT || 1400, function() {
     console.log('SERVER IS STARTED. PORT:', server.address().port);
 
     var game = new GameLogic();
+
+    var webSocketServer = new WebSocketServer({
+        httpServer: server
+    });
 
     webSocketServer.on('request', function(request) {
 

@@ -18,7 +18,7 @@ Map.CELL_TYPE = {
     RESPAWN: 99
 };
 
-_.extend(Map.prototype, require('events').EventEmitter);
+_.extend(Map.prototype, require('events').EventEmitter.prototype);
 
 /**
  * Загружает выбранную карту.
@@ -34,7 +34,7 @@ Map.prototype._loadMap = function(mapNumber) {
     this.colsCount = map[0].length;
 
     for (var y = 0; y < this.rowsCount; ++y) {
-        for (var x = 0; y < this.colsCount; ++x) {
+        for (var x = 0; x < this.colsCount; ++x) {
             var cell = map[y][x];
 
             if (cell === Map.CELL_TYPE.NORMAL) {
@@ -49,6 +49,8 @@ Map.prototype._loadMap = function(mapNumber) {
             }
         }
     }
+
+    this.respawnsCount = this.respawns.length;
 };
 
 /**
@@ -77,22 +79,20 @@ Map.prototype.checkCollision = function(object) {
     var col2 = Math.ceil(x + width / 2);
     var row2 = Math.ceil(y + height / 2);
 
-    if (col1 < 0 || col2 >= COLS_COUNT || row1 < 0 || row2 >= ROWS_COUNT) {
+    if (col1 < 0 || col2 >= this.colsCount || row1 < 0 || row2 >= this.rowsCount) {
         return true;
     }
 
     for (var col = col1; col <= col2; ++col) {
         for (var row = row1; row <= row2; ++row) {
 
-            var cell = map[row][col];
+            var cell = this.map[row][col];
 
-            if (!(cell[0] === CELL_TYPE.EMPTY || cell[1] === 0)) {
+            if (!(cell[0] === Map.CELL_TYPE.EMPTY || cell[1] === 0)) {
                 return true;
             }
         }
     }
-
-    this.respawnsCount = this.respawns.length;
 };
 
 /**
@@ -102,7 +102,7 @@ Map.prototype.checkCollision = function(object) {
 Map.prototype.damageCell = function(cell) {
     var cellInfo = map[cell[1]][cell[0]];
 
-    if (cellInfo[0] === CELL_TYPE.NORMAL && cellInfo[1] !== 0) {
+    if (cellInfo[0] === Map.CELL_TYPE.NORMAL && cellInfo[1] !== 0) {
         cellInfo[1]--;
 
         this.emit('mapCellUpdate', {

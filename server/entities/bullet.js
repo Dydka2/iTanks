@@ -18,12 +18,17 @@ function Bullet(initParams) {
         direction: initParams.direction,
         position: _.clone(initParams.position),
         size: BULLET_SIZE,
-        speed: BULLET_SPEED
+        speed: BULLET_SPEED,
+        imMove: true
     });
 
     this.player = initParams.player || null;
 }
 
 Bullet.prototype = Object.create(GameObject.prototype);
+
+Bullet.prototype.explode = function() {
+    this.emit('explode');
+};
 
 module.exports = Bullet;

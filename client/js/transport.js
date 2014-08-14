@@ -9,7 +9,7 @@
             return parsed[1];
         }
 
-        return "1337";
+        return "1400";
     };
 
     Transport._onMessage = function(message) {

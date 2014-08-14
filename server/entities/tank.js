@@ -38,6 +38,7 @@ function Tank(initParams) {
 
     this.hp = 0;
     this.lastShootTS = 0;
+    this.isDead = true;
 
     var tankProto = TANK_TYPES[initParams.tankType];
 
@@ -66,28 +67,6 @@ Tank.prototype.tryShoot = function() {
 
         this.emit('shoot', bullet);
     }
-};
-
-Tank.prototype.respawn = function(callback) {
-    var that = this;
-
-    setRandomRespawnPosition(this);
-
-    if (checkPlayerCollision(this)) {
-        setTimeout(function() {
-            that.respawn(callback);
-        }, 200);
-        return;
-    }
-
-    this.hp = this.baseHp;
-    this.isDead = false;
-
-    this.emit('updateHealth', {
-        hp: this.hp
-    });
-
-    callback && callback();
 };
 
 /**
