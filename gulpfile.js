@@ -7,8 +7,19 @@ gulp.task('css', function() {
         .pipe(gulp.dest('./client/'));
 });
 
-gulp.task('default', ['css']);
+gulp.task('ui', function() {
+    gulp.src('./client/js/ui-chat.js')
+    .pipe(browserify({
+        //options go here
+    }))
+    .pipe(gulp.dest('./client/js/build'))
+});
+
+gulp.task('default', ['css', 'ui']);
 
 gulp.task('watch', ['default'], function() {
     gulp.watch('client/*.styl', ['css']);
 });
+
+var browserify = require('gulp-browserify');
+
