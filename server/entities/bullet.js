@@ -15,12 +15,12 @@ var BULLET_SIZE = [0.35, 0.5];
 function Bullet(initParams) {
     initParams = initParams || {};
 
-    GameObject.apply(this, {
+    GameObject.call(this, {
         direction: initParams.direction,
         position: _.clone(initParams.position),
         size: BULLET_SIZE,
         speed: BULLET_SPEED,
-        imMove: true
+        inMove: true
     });
 
     this.player = initParams.player || null;

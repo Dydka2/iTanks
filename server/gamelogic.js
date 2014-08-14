@@ -57,7 +57,7 @@ GameLogic.prototype.onConnect = function(socket) {
             that._bullets.push(bullet);
 
             bullet.on('explode', function() {
-               broadcast({
+               that.broadcast({
                    event: 'hit',
                    data: {
                        position: bullet.position
@@ -80,7 +80,7 @@ GameLogic.prototype.onConnect = function(socket) {
 
     newPlayer.on('loged', function() {
         that.send(newPlayer, {
-            action: 'details',
+            event: 'details',
             data: {
                 map: that._map.map,
                 baseHp: newPlayer.tank.baseHp,
@@ -288,12 +288,12 @@ GameLogic.prototype.updateWorld = function() {
     for (i = 0; i < bulletsToDestroy.length; ++i) {
         bullet = bulletsToDestroy[i];
 
-        var index = BULLETS.indexOf(bullet);
+        var index = this._bullets.indexOf(bullet);
 
         if (index !== -1) {
             bullet.explode();
 
-            BULLETS = BULLETS.splice(index, 1);
+            this._bullets.splice(index, 1);
         }
     }
 
@@ -353,9 +353,7 @@ GameLogic.prototype.send = function(player, data) {
         return;
     }
 
-    if (player.inGame) {
-        player.socket.send(json);
-    }
+    player.socket.send(json);
 };
 
 /**

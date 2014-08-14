@@ -89,7 +89,7 @@ Map.prototype.checkCollision = function(object) {
             var cell = this.map[row][col];
 
             if (!(cell[0] === Map.CELL_TYPE.EMPTY || cell[1] === 0)) {
-                return true;
+                return cell;
             }
         }
     }
@@ -97,18 +97,20 @@ Map.prototype.checkCollision = function(object) {
 
 /**
  * Повредить (или уничтожить) ячейку карты.
- * @param {Array} cell координаты ячейки
+ * @param {Array} [cell] координаты ячейки
  */
 Map.prototype.damageCell = function(cell) {
-    var cellInfo = map[cell[1]][cell[0]];
+    if (Array.isArray(cell)) {
+        var cellInfo = this.map[cell[1]][cell[0]];
 
-    if (cellInfo[0] === Map.CELL_TYPE.NORMAL && cellInfo[1] !== 0) {
-        cellInfo[1]--;
+        if (cellInfo[0] === Map.CELL_TYPE.NORMAL && cellInfo[1] !== 0) {
+            cellInfo[1]--;
 
-        this.emit('mapCellUpdate', {
-            positions: cell,
-            cell: cellInfo
-        });
+            this.emit('mapCellUpdate', {
+                positions: cell,
+                cell: cellInfo
+            });
+        }
     }
 };
 

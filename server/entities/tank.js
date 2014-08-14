@@ -31,7 +31,7 @@ var TANK_TYPES = [
  * @constructor
  */
 function Tank(initParams) {
-    GameObject.apply(this, {
+    GameObject.call(this, {
         size: TANK_SIZE,
         inMove: false
     });
@@ -63,7 +63,7 @@ Tank.prototype.tryShoot = function() {
             player: this.player
         });
 
-        bullet.moveForward(this.size[1] * 1.1);
+        bullet.moveForward(this.size[1] * 0.55);
 
         this.emit('shoot', bullet);
     }
