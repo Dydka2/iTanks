@@ -54,9 +54,9 @@ Map.prototype._loadMap = function(mapNumber) {
 };
 
 /**
- * Просчитать коллизию с поверхростью.
+ * Просчитать коллизию с поверхностью.
  * @param object
- * @returns {boolean}
+ * @return {boolean}
  */
 Map.prototype.checkCollision = function(object) {
     var width;

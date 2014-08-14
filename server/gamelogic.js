@@ -192,12 +192,12 @@ GameLogic.prototype.updateWorld = function() {
                 var roundFunc;
                 var epsilon;
 
-                if (tank.direction === 0 || tank.direction === 3) {
-                    roundFunc = Math.ceil;
+                if (tank.direction === 1 || tank.direction === 2) {
+                    roundFunc = Math.floor;
                     delta = tank.size[axis] / 2;
                     epsilon = EPSILON;
                 } else {
-                    roundFunc = Math.floor;
+                    roundFunc = Math.ceil;
                     delta = -tank.size[axis] / 2;
                     epsilon = -EPSILON;
                 }

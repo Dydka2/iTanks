@@ -1,4 +1,5 @@
 
+var _ = require('lodash');
 var GameObject = require('./gameobject');
 
 var BULLET_SPEED = 0.05;

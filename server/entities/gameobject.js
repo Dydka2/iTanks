@@ -40,7 +40,7 @@ GameObject.prototype.updatePosition = function() {
     if (this.inMove) {
         var isNegative = this.direction === 0 || this.direction === 3;
 
-        this.position[1 - this.direction % 2] += this.speed * isNegative ? -1 : 1;
+        this.position[1 - this.direction % 2] += this.speed * (isNegative ? -1 : 1);
     }
 };
 
@@ -53,7 +53,7 @@ GameObject.prototype.moveForward = function(distance) {
     var axis = (this.direction === 0 || this.direction === 2 ? 1 : 0);
     var isNegative = (this.direction === 0 || this.direction === 3);
 
-    bullet.position[axis] += distance * (isNegative ? -1 : 1);
+    this.position[axis] += distance * (isNegative ? -1 : 1);
 };
 
 /**

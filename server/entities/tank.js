@@ -4,7 +4,7 @@ var GameObject = require('./gameobject');
 var Bullet = require('./bullet');
 
 var TANK_SIZE = [1.6, 1.6];
-var BASE_TANK_SPEED = 0.025;
+var BASE_TANK_SPEED = 0.1;
 var BASE_TANK_RECOIL = 1000;
 
 var TANK_TYPES = [
