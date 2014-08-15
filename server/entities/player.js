@@ -3,8 +3,6 @@ var Tank = require('./tank');
 
 var PLAYER_COLORS = ['blue', 'green', 'red', 'yellow', 'brown', 'orange', 'purple'];
 
-
-
 /**
  * @param {Object} initParams
  * @param {WebSocket} initParams.socket
@@ -24,6 +22,8 @@ function Player(initParams) {
     this._addEventListeners();
 }
 
+Player.prototype = Object.create(require('events').EventEmitter.prototype);
+
 /**
  * @param {Object} loginParams
  * @param {string} loginParams.name
@@ -31,10 +31,17 @@ function Player(initParams) {
 Player.prototype.login = function(loginParams) {
     this.name = loginParams.name;
     this.inGame = true;
+    this.color = PLAYER_COLORS[Math.floor(Math.random() * PLAYER_COLORS.length)];
 
-    this.createTank();
+    this.createTank(loginParams.tankType);
 
     this.emit('tankCreated', this.tank);
+
+    this.emit('joined');
+};
+
+Player.prototype.getTank = function() {
+    return this.tank;
 };
 
 /**
@@ -43,7 +50,7 @@ Player.prototype.login = function(loginParams) {
  */
 Player.prototype.createTank = function(tankType) {
     this.tank = new Tank({
-        player: player,
+        player: this,
         tankType: tankType
     });
 };
@@ -79,14 +86,14 @@ Player.prototype._addEventListeners = function() {
 
         switch (action) {
             case 'login':
-
-                that._login(data);
-
+                that.login(data);
                 break;
 
             case 'updateState':
-                player.direction = data.direction;
-                player.inMove = data.inMove;
+                if (that.tank) {
+                    that.tank.direction = data.direction;
+                    that.tank.inMove = data.inMove;
+                }
                 break;
 
             case 'shoot':
@@ -99,65 +106,7 @@ Player.prototype._addEventListeners = function() {
     });
 
     this.socket.on('close', function() {
-
-        if (player.joint) {
-            broadcast({
-                event: 'playerLeft',
-                data: {
-                    id: player.id
-                }
-            });
-        }
-    });
-};
-
-Player.prototype._login = function(data) {
-
-    player.id = getUniqId();
-    player.color = PLAYER_COLORS[Math.floor(Math.random() * PLAYER_COLORS.length)];
-    player.joint = true;
-    player.name = data.name;
-    player.tankType = 1;
-
-    if (!isNaN(data.tankType)) {
-        player.tankType = data.tankType;
-    }
-
-    _.extend(player, TANK_VARIATIONS[player.tankType]);
-
-    respawnPlayer(player, function() {
-
-        send(player, {
-            event: 'playerList',
-            data: PLAYERS.filter(jointFilter).map(function(player) {
-                return {
-                    id: player.id,
-                    name: player.name,
-                    color: player.color,
-                    kills: player.kills,
-                    deaths: player.deaths
-                };
-            })
-        });
-
-        broadcastExcept(player, {
-            event: 'playerJoined',
-            data: {
-                id: player.id,
-                name: player.name,
-                color: player.color,
-                kills: player.kills,
-                deaths: player.deaths
-            }
-        });
-
-        send(player, {
-            event: 'details',
-            data: {
-                map: MAP,
-                hp: player.hp
-            }
-        });
+        that.emit('leave');
     });
 };
 

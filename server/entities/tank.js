@@ -4,7 +4,7 @@ var GameObject = require('./gameobject');
 var Bullet = require('./bullet');
 
 var TANK_SIZE = [1.6, 1.6];
-var BASE_TANK_SPEED = 0.025;
+var BASE_TANK_SPEED = 0.1;
 var BASE_TANK_RECOIL = 1000;
 
 var TANK_TYPES = [
@@ -31,13 +31,14 @@ var TANK_TYPES = [
  * @constructor
  */
 function Tank(initParams) {
-    GameObject.apply(this, {
+    GameObject.call(this, {
         size: TANK_SIZE,
         inMove: false
     });
 
     this.hp = 0;
     this.lastShootTS = 0;
+    this.isDead = true;
 
     var tankProto = TANK_TYPES[initParams.tankType];
 
@@ -62,32 +63,10 @@ Tank.prototype.tryShoot = function() {
             player: this.player
         });
 
-        bullet.moveForward(this.size[1] * 1.1);
+        bullet.moveForward(this.size[1] * 0.55);
 
         this.emit('shoot', bullet);
     }
-};
-
-Tank.prototype.respawn = function(callback) {
-    var that = this;
-
-    setRandomRespawnPosition(this);
-
-    if (checkPlayerCollision(this)) {
-        setTimeout(function() {
-            that.respawn(callback);
-        }, 200);
-        return;
-    }
-
-    this.hp = this.baseHp;
-    this.isDead = false;
-
-    this.emit('updateHealth', {
-        hp: this.hp
-    });
-
-    callback && callback();
 };
 
 /**

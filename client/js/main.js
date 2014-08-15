@@ -46,32 +46,25 @@ if (UA.indexOf('iPad') > -1) {
  * @param {Number} y
  */
 T.renderCell = function(cell, x, y) {
-    console.log('renderCell')
-    // просто клетка, без состояния
+    console.log('renderCell');
+
+    var type = cell[0];
+    var state = cell[1];
     var texture = null;
-    var type = cell;
-    var state;
-    if (_.isArray(cell)) {
-        type = cell[0];
-        state = cell[1];
-    }
 
     switch (type) {
     case T.EMPTY:
         break;
 
     case T.BRICK:
-        texture = T.textures['brick'];
 
-        if (_.isArray(cell)) {
-            if (state === 0) {
-                texture = false;
-            }
-            if (state === 1) {
-                texture = T.textures['brick_broken'];
-            }
+        if (state === 2) {
+            texture = T.textures['brick'];
 
+        } else if (state === 1) {
+            texture = T.textures['brick_broken'];
         }
+
         break;
 
     case T.CEMENT:
@@ -99,13 +92,12 @@ T.renderCell = function(cell, x, y) {
 
 T.updateMap = function(map) {
     T.mapData = map;
-    for (var i = 0; i < map.length; i++) {
-        var row = map[i];
-        for (var j = 0; j < row.length; j++) {
-            var cell = row[j];
+    for (var y = 0; y < map.length; y++) {
+        var row = map[y];
+        for (var x = 0; x < row.length; x++) {
+            var cell = row[x];
 
-            // тут нет ошибки, x - это j, y - это j
-            T.renderCell(cell, j, i);
+            T.renderCell(cell, x, y);
         }
     }
 };
@@ -438,10 +430,7 @@ T.renderHP = function(hp) {
 };
 
 T.terrainDamage = function(data) {
-    var l = data.length;
-    for (var i = 0; i < l; i++) {
-        T.renderCell(data[i].cell, data[i].positions[0], data[i].positions[1]);
-    }
+    T.renderCell(data.cell, data.positions[0], data.positions[1]);
 };
 
 /**
@@ -450,7 +439,7 @@ T.terrainDamage = function(data) {
  */
 T.render = function(data) {
     T.ctx.clearRect(0,0,T.AREA_WIDTH,T.AREA_WIDTH);
-    T.renderEntities(data.players);
+    T.renderEntities(data.tanks);
     T.renderEntities(data.bullets, true);
     T.renderAnimations(T.animations);
 };

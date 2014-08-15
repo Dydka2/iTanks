@@ -3,7 +3,7 @@ var EPSILON = 0.001;
 var PLAYER_RESPAWN_INTERVAL = 3000;
 var PLAYER_RESPAWN_TRY_INTERVAL = 100;
 
-var Map = require('./entities/map.js');
+var Map = require('./entities/map');
 var Player = require('./entities/player');
 
 /**
@@ -17,9 +17,10 @@ function GameLogic() {
         mapId: 2
     });
 
-    this._map.on('mapCellUpdate', function(data) {
+    this._map.on('updateCell', function(data) {
+        console.log('UPDATE CELL', data);
         that.broadcast({
-            event: 'mapCellUpdate',
+            event: 'updateCell',
             data: data
         });
     });
@@ -29,7 +30,7 @@ function GameLogic() {
     this._bullets = [];
 
     this.updateInterval = setInterval(this.updateWorld.bind(this), 23);
-    this.sendInterval = setInterval(this.sendUpdates.bind(this), 7);
+    this.sendInterval = setInterval(this.sendUpdates.bind(this), 100);
 }
 
 GameLogic.prototype.destroy = function() {
@@ -55,6 +56,15 @@ GameLogic.prototype.onConnect = function(socket) {
 
         tank.on('shoot', function(bullet) {
             that._bullets.push(bullet);
+
+            bullet.on('explode', function() {
+               that.broadcast({
+                   event: 'hit',
+                   data: {
+                       position: bullet.position
+                   }
+               })
+            });
         });
 
         tank.on('updateHealth', function(hp) {
@@ -67,6 +77,58 @@ GameLogic.prototype.onConnect = function(socket) {
         });
 
         that._tanks.push(tank);
+    });
+
+    newPlayer.on('joined', function() {
+        that.send(newPlayer, {
+            event: 'details',
+            data: {
+                map: that._map.map,
+                baseHp: newPlayer.tank.baseHp,
+                now: new Date().getTime()
+            }
+        });
+
+        that.send(newPlayer, {
+            event: 'playerList',
+            data: that._players.filter(function(pl) { return pl.inGame; }).map(function(player) {
+                return {
+                    id: player.id,
+                    name: player.name,
+                    color: player.color,
+                    kills: player.kills,
+                    deaths: player.deaths
+                };
+            })
+        });
+
+        that.broadcastExcept(newPlayer, {
+            event: 'playerJoined',
+            data: {
+                id: newPlayer.id,
+                name: newPlayer.name,
+                color: newPlayer.color,
+                kills: newPlayer.kills,
+                deaths: newPlayer.deaths
+            }
+        });
+
+        that.setRespawnTankTimer(newPlayer.tank, 0);
+
+    });
+
+    newPlayer.on('leave', function() {
+        var index = that._players.indexOf(newPlayer);
+        if (index !== -1) {
+            that._players.splice(index, 1);
+        }
+
+        that.broadcast({
+            event: 'playerLeft',
+            data: {
+                id: newPlayer.id
+            }
+        });
     });
 
     this._players.push(newPlayer);
@@ -86,13 +148,15 @@ GameLogic.prototype.setRespawnTankTimer = function(tank, time) {
         for (var i = 0; i < that._tanks.length; ++i) {
             var otherTank = that._tanks[i];
 
-            if (!tank.isDead) {
+            if (!otherTank.isDead) {
                 if (tank.checkCollision(otherTank)) {
                     that.setRespawnTankTimer(tank, PLAYER_RESPAWN_TRY_INTERVAL);
-                    break;
+                    return;
                 }
             }
         }
+
+        tank.isDead = false;
     }, time);
 };
 
@@ -101,7 +165,6 @@ GameLogic.prototype.setRespawnTankTimer = function(tank, time) {
  */
 GameLogic.prototype.updateWorld = function() {
     var i, j;
-    var player;
     var axis;
     var delta;
     var bullet;
@@ -109,7 +172,7 @@ GameLogic.prototype.updateWorld = function() {
     var bulletsToDestroy = [];
 
     for (i = 0; i < this._bullets.length; ++i) {
-        bullets[i].updatePosition();
+        this._bullets[i].updatePosition();
     }
 
     for (i = 0; i < this._tanks.length; ++i) {
@@ -130,12 +193,12 @@ GameLogic.prototype.updateWorld = function() {
                 var roundFunc;
                 var epsilon;
 
-                if (tank.direction === 0 || tank.direction === 3) {
-                    roundFunc = Math.ceil;
+                if (tank.direction === 1 || tank.direction === 2) {
+                    roundFunc = Math.floor;
                     delta = tank.size[axis] / 2;
                     epsilon = EPSILON;
                 } else {
-                    roundFunc = Math.floor;
+                    roundFunc = Math.ceil;
                     delta = -tank.size[axis] / 2;
                     epsilon = -EPSILON;
                 }
@@ -143,7 +206,7 @@ GameLogic.prototype.updateWorld = function() {
                 tank.position[axis] = roundFunc(tank.position[axis] + delta) - delta - epsilon;
             }
 
-            for (j = 0; j <= this._tanks.length; ++p) {
+            for (j = 0; j < this._tanks.length; ++j) {
 
                 if (j === i) {
                     continue;
@@ -170,7 +233,7 @@ GameLogic.prototype.updateWorld = function() {
             }
         }
 
-        for (j = 0; j <= this._bullets.length; ++j) {
+        for (j = 0; j < this._bullets.length; ++j) {
 
             bullet = this._bullets[j];
 
@@ -212,7 +275,19 @@ GameLogic.prototype.updateWorld = function() {
         if (cell = this._map.checkCollision(bullet)) {
             bulletsToDestroy.push(bullet);
 
-            this._map.damageCell(cell);
+            var damageCells = [cell];
+
+            if (bullet.direction === 0 || bullet.direction === 2) {
+                damageCells.push([cell[0] - 1, cell[1]]);
+                damageCells.push([cell[0] + 1, cell[1]]);
+            } else {
+                damageCells.push([cell[0], cell[1] - 1]);
+                damageCells.push([cell[0], cell[1] + 1]);
+            }
+
+            for (var k = 0; k < damageCells.length; ++k) {
+                this._map.damageCell(damageCells[k]);
+            }
 
             this.broadcast({
                 event: 'hit',
@@ -226,12 +301,12 @@ GameLogic.prototype.updateWorld = function() {
     for (i = 0; i < bulletsToDestroy.length; ++i) {
         bullet = bulletsToDestroy[i];
 
-        var index = BULLETS.indexOf(bullet);
+        var index = this._bullets.indexOf(bullet);
 
         if (index !== -1) {
             bullet.explode();
 
-            BULLETS = BULLETS.splice(index, 1);
+            this._bullets.splice(index, 1);
         }
     }
 
@@ -245,10 +320,11 @@ GameLogic.prototype.sendUpdates = function() {
     var tanks = [];
     var bullets = [];
 
-    for (i = 0; i < this._tanks.length; ++i) {
-        var tank = this._tanks[i];
+    for (i = 0; i < this._players.length; ++i) {
+        var player = this._players[i];
+        var tank = player.getTank();
 
-        if (!tank.isDead) {
+        if (tank && !tank.isDead) {
             tanks.push({
                 id: player.id,
                 position: tank.position,
@@ -290,9 +366,7 @@ GameLogic.prototype.send = function(player, data) {
         return;
     }
 
-    if (player.inGame) {
-        player.socket.send(json);
-    }
+    player.socket.send(json);
 };
 
 /**
