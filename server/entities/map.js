@@ -76,8 +76,8 @@ Map.prototype.checkCollision = function(object) {
     var col1 = Math.floor(x - width / 2);
     var row1 = Math.floor(y - height / 2);
 
-    var col2 = Math.ceil(x + width / 2);
-    var row2 = Math.ceil(y + height / 2);
+    var col2 = Math.ceil(x + width / 2) - 1;
+    var row2 = Math.ceil(y + height / 2) - 1;
 
     if (col1 < 0 || col2 >= this.colsCount || row1 < 0 || row2 >= this.rowsCount) {
         return true;
@@ -89,7 +89,7 @@ Map.prototype.checkCollision = function(object) {
             var cell = this.map[row][col];
 
             if (!(cell[0] === Map.CELL_TYPE.EMPTY || cell[1] === 0)) {
-                return cell;
+                return [col, row];
             }
         }
     }
@@ -106,7 +106,7 @@ Map.prototype.damageCell = function(cell) {
         if (cellInfo[0] === Map.CELL_TYPE.NORMAL && cellInfo[1] !== 0) {
             cellInfo[1]--;
 
-            this.emit('mapCellUpdate', {
+            this.emit('updateCell', {
                 positions: cell,
                 cell: cellInfo
             });

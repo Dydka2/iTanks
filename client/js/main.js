@@ -430,10 +430,7 @@ T.renderHP = function(hp) {
 };
 
 T.terrainDamage = function(data) {
-    var l = data.length;
-    for (var i = 0; i < l; i++) {
-        T.renderCell(data[i].cell, data[i].positions[0], data[i].positions[1]);
-    }
+    T.renderCell(data.cell, data.positions[0], data.positions[1]);
 };
 
 /**

@@ -3,7 +3,7 @@ var EPSILON = 0.001;
 var PLAYER_RESPAWN_INTERVAL = 3000;
 var PLAYER_RESPAWN_TRY_INTERVAL = 100;
 
-var Map = require('./entities/map.js');
+var Map = require('./entities/map');
 var Player = require('./entities/player');
 
 /**
@@ -17,9 +17,10 @@ function GameLogic() {
         mapId: 2
     });
 
-    this._map.on('mapCellUpdate', function(data) {
+    this._map.on('updateCell', function(data) {
+        console.log('UPDATE CELL', data);
         that.broadcast({
-            event: 'mapCellUpdate',
+            event: 'updateCell',
             data: data
         });
     });
@@ -274,7 +275,19 @@ GameLogic.prototype.updateWorld = function() {
         if (cell = this._map.checkCollision(bullet)) {
             bulletsToDestroy.push(bullet);
 
-            this._map.damageCell(cell);
+            var damageCells = [cell];
+
+            if (bullet.direction === 0 || bullet.direction === 2) {
+                damageCells.push([cell[0] - 1, cell[1]]);
+                damageCells.push([cell[0] + 1, cell[1]]);
+            } else {
+                damageCells.push([cell[0], cell[1] - 1]);
+                damageCells.push([cell[0], cell[1] + 1]);
+            }
+
+            for (var k = 0; k < damageCells.length; ++k) {
+                this._map.damageCell(damageCells[k]);
+            }
 
             this.broadcast({
                 event: 'hit',
