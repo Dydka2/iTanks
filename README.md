@@ -3,7 +3,7 @@ iTanks
 
 ###Запуск
 Для игры необходим веб-сервер. Для запуска:
-```node server/server.js```
+```cd server && node server.js```
 
 Для запуска клиента достаточно зайти на ```index.html```
 
