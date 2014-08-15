@@ -37,7 +37,7 @@ Player.prototype.login = function(loginParams) {
 
     this.emit('tankCreated', this.tank);
 
-    this.emit('loged');
+    this.emit('joined');
 };
 
 Player.prototype.getTank = function() {

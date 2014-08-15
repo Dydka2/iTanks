@@ -79,7 +79,7 @@ GameLogic.prototype.onConnect = function(socket) {
         that._tanks.push(tank);
     });
 
-    newPlayer.on('loged', function() {
+    newPlayer.on('joined', function() {
         that.send(newPlayer, {
             event: 'details',
             data: {
