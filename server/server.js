@@ -23,7 +23,7 @@ server.listen(process.env.PORT || 1400, function() {
         if (request.resource === '/game') {
             var connection = request.accept(null, request.origin);
 
-            game.onConnect(connection)
+            game.onConnect(connection);
         } else {
             request.reject();
         }

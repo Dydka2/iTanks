@@ -101,7 +101,14 @@ Map.prototype.checkCollision = function(object) {
  */
 Map.prototype.damageCell = function(cell) {
     if (Array.isArray(cell)) {
-        var cellInfo = this.map[cell[1]][cell[0]];
+        var col = cell[0];
+        var row = cell[1];
+
+        if (row < 0 || row >= this.rowsCount || col < 0 || col >= this.colsCount) {
+            return;
+        }
+
+        var cellInfo = this.map[row][col];
 
         if (cellInfo[0] === Map.CELL_TYPE.NORMAL && cellInfo[1] !== 0) {
             cellInfo[1]--;

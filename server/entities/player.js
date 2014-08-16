@@ -101,7 +101,7 @@ Player.prototype._addEventListeners = function() {
                 break;
 
             default:
-                console.log('UNSUPPORTED INCOMMING MESSAGE', messageData.action, data);
+                console.log('UNSUPPORTED INCOMMING MESSAGE', action, data);
         }
     });
 

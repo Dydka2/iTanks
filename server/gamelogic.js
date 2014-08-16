@@ -63,7 +63,7 @@ GameLogic.prototype.onConnect = function(socket) {
                    data: {
                        position: bullet.position
                    }
-               })
+               });
             });
         });
 
@@ -270,31 +270,26 @@ GameLogic.prototype.updateWorld = function() {
     for (i = 0; i < this._bullets.length; ++i) {
         bullet = this._bullets[i];
 
-        var cell;
+        var cell = this._map.checkCollision(bullet);
 
-        if (cell = this._map.checkCollision(bullet)) {
+        if (cell) {
             bulletsToDestroy.push(bullet);
 
-            var damageCells = [cell];
+            if (Array.isArray(cell)) {
+                var damageCells = [cell];
 
-            if (bullet.direction === 0 || bullet.direction === 2) {
-                damageCells.push([cell[0] - 1, cell[1]]);
-                damageCells.push([cell[0] + 1, cell[1]]);
-            } else {
-                damageCells.push([cell[0], cell[1] - 1]);
-                damageCells.push([cell[0], cell[1] + 1]);
-            }
-
-            for (var k = 0; k < damageCells.length; ++k) {
-                this._map.damageCell(damageCells[k]);
-            }
-
-            this.broadcast({
-                event: 'hit',
-                data: {
-                    position: bullet.position
+                if (bullet.direction === 0 || bullet.direction === 2) {
+                    damageCells.push([cell[0] - 1, cell[1]]);
+                    damageCells.push([cell[0] + 1, cell[1]]);
+                } else {
+                    damageCells.push([cell[0], cell[1] - 1]);
+                    damageCells.push([cell[0], cell[1] + 1]);
                 }
-            });
+
+                for (var k = 0; k < damageCells.length; ++k) {
+                    this._map.damageCell(damageCells[k]);
+                }
+            }
         }
     }
 
