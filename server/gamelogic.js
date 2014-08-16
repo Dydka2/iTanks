@@ -18,7 +18,6 @@ function GameLogic() {
     });
 
     this._map.on('updateCell', function(data) {
-        console.log('UPDATE CELL', data);
         that.broadcast({
             event: 'updateCell',
             data: data
@@ -30,7 +29,7 @@ function GameLogic() {
     this._bullets = [];
 
     this.updateInterval = setInterval(this.updateWorld.bind(this), 23);
-    this.sendInterval = setInterval(this.sendUpdates.bind(this), 100);
+    this.sendInterval = setInterval(this.sendUpdates.bind(this), 70);
 }
 
 GameLogic.prototype.destroy = function() {
