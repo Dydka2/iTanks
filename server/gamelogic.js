@@ -3,6 +3,7 @@ var EPSILON = 0.001;
 var PLAYER_RESPAWN_INTERVAL = 3000;
 var PLAYER_RESPAWN_TRY_INTERVAL = 100;
 
+var _ = require('lodash');
 var Map = require('./entities/map');
 var Player = require('./entities/player');
 
@@ -150,7 +151,7 @@ GameLogic.prototype.setRespawnTankTimer = function(tank, time) {
     var that = this;
 
     tank.respawnTimeout = setTimeout(function() {
-        tank.position = that._map.getRandomRespawn();
+        tank.position = _.clone(that._map.getRandomRespawn());
 
         for (var i = 0; i < that._tanks.length; ++i) {
             var otherTank = that._tanks[i];
