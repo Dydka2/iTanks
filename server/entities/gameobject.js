@@ -36,11 +36,17 @@ GameObject.prototype.checkCollision = function(object) {
     return checkCollisionByAxis(0, this, object) && checkCollisionByAxis(1, this, object);
 };
 
-GameObject.prototype.updatePosition = function() {
+/**
+ * Обновить коодинаты.
+ * @param {number} period (ms)
+ */
+GameObject.prototype.updatePosition = function(period) {
     if (this.inMove) {
         var isNegative = this.direction === 0 || this.direction === 3;
 
-        this.position[1 - this.direction % 2] += this.speed * (isNegative ? -1 : 1);
+        var distantion = this.speed / period;
+
+        this.position[1 - this.direction % 2] += distantion * (isNegative ? -1 : 1);
     }
 };
 

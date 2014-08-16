@@ -6,6 +6,9 @@ var PLAYER_RESPAWN_TRY_INTERVAL = 100;
 var Map = require('./entities/map');
 var Player = require('./entities/player');
 
+var GAME_LOGIC_INTERVAL = 23;
+var SEND_UPDATES_INTERVAL = 70;
+
 /**
  * Класс описывающий игровую логику одного мира.
  * @constructor
@@ -28,13 +31,18 @@ function GameLogic() {
     this._tanks = [];
     this._bullets = [];
 
-    this.updateInterval = setInterval(this.updateWorld.bind(this), 23);
-    this.sendInterval = setInterval(this.sendUpdates.bind(this), 70);
+    this.lastWorldUpdateTS = new Date().getTime();
+
+    this.updateWorld = this.updateWorld.bind(this);
+    this.sendUpdates = this.sendUpdates.bind(this);
+
+    this.updateWorld();
+    this.sendUpdates();
 }
 
 GameLogic.prototype.destroy = function() {
-    clearInterval(this.updateInterval);
-    clearInterval(this.sendInterval);
+    clearTimeout(this.updateWorldTimeout);
+    clearTimeout(this.sendUpdatesTimeout);
 
     this._players.forEach(function(player) {
         player.socket.reject();
@@ -163,6 +171,10 @@ GameLogic.prototype.setRespawnTankTimer = function(tank, time) {
  * Обновление мира.
  */
 GameLogic.prototype.updateWorld = function() {
+    var startTS = new Date().getTime();
+
+    var deltaTS = startTS - this.lastWorldUpdateTS;
+
     var i, j;
     var axis;
     var delta;
@@ -171,7 +183,7 @@ GameLogic.prototype.updateWorld = function() {
     var bulletsToDestroy = [];
 
     for (i = 0; i < this._bullets.length; ++i) {
-        this._bullets[i].updatePosition();
+        this._bullets[i].updatePosition(deltaTS);
     }
 
     for (i = 0; i < this._tanks.length; ++i) {
@@ -179,7 +191,7 @@ GameLogic.prototype.updateWorld = function() {
         var tank = this._tanks[i];
 
         if (!tank.isDead) {
-            tank.updatePosition();
+            tank.updatePosition(deltaTS);
 
             if (this._map.checkCollision(tank)) {
 
@@ -304,12 +316,17 @@ GameLogic.prototype.updateWorld = function() {
         }
     }
 
+    this.lastWorldUpdateTS = startTS;
+
+    var nextTick = GAME_LOGIC_INTERVAL - (new Date().getTime() - startTS);
+    this.updateWorldTimeout = setTimeout(this.updateWorld, nextTick);
 };
 
 /**
  * Посылает обновления игрокам.
  */
 GameLogic.prototype.sendUpdates = function() {
+    var startTS = new Date().getTime();
     var i;
     var tanks = [];
     var bullets = [];
@@ -343,6 +360,9 @@ GameLogic.prototype.sendUpdates = function() {
             bullets: bullets
         }
     });
+
+    var nextTick = SEND_UPDATES_INTERVAL - (new Date().getTime() - startTS);
+    this.sendUpdatesTimeout = setTimeout(this.sendUpdates, nextTick);
 };
 
 /**
