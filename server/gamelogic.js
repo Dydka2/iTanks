@@ -371,16 +371,8 @@ GameLogic.prototype.sendUpdates = function() {
  * @param {Object} data
  */
 GameLogic.prototype.send = function(player, data) {
-    var json;
 
-    try {
-        json = JSON.stringify(data);
-    } catch(e) {
-        console.log('BROADCAST stringify failed', e);
-        return;
-    }
-
-    player.socket.send(json);
+    player.socket.send(JSON.stringify(data));
 };
 
 /**
@@ -397,14 +389,7 @@ GameLogic.prototype.broadcast = function(data) {
  * @param {Player} [except]
  */
 GameLogic.prototype.broadcastExcept = function(except, data) {
-    var json;
-
-    try {
-        json = JSON.stringify(data);
-    } catch(e) {
-        console.log('BROADCAST stringify failed', e);
-        return;
-    }
+    var json = JSON.stringify(data);
 
     for (var i = 0; i < this._players.length; ++i) {
         var player = this._players[i];
