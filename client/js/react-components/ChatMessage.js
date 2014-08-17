@@ -8,7 +8,7 @@ var ChatMessage = React.createClass({
     displayName: 'ChatMessage',
     render: function() {
         return (
-            React.DOM.div({className: 'b-message'},
+            React.DOM.div({className: 'b-chat-message'},
                 this.props.message.hours,
                 ":",
                 this.props.message.minutes,

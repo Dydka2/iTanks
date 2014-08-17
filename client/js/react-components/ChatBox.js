@@ -10,7 +10,7 @@ var ChatBox = React.createClass({
     displayName: 'ChatBox',
     render: function() {
         return (
-            React.DOM.div({className: 'b-message-box'},
+            React.DOM.div({className: 'b-chat-message-box'},
                 ChatMessages({
                     data: this.props.data
                 }),

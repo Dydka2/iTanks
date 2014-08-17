@@ -17,7 +17,7 @@ var ChatMessages = React.createClass({
         });
 
         return (
-            React.DOM.div({className: 'b-messages'},
+            React.DOM.div({className: 'b-chat-messages'},
                 ChatMessageNodes
             )
         );
