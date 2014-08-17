@@ -33,7 +33,10 @@ GameObject.prototype.checkCollision = function(object) {
         return false;
     }
 
-    return checkCollisionByAxis(0, this, object) && checkCollisionByAxis(1, this, object);
+    var byX = checkCollisionByAxis(0, this, object);
+    var byY = checkCollisionByAxis(1, this, object);
+
+    return byX && byY;
 };
 
 /**
@@ -90,7 +93,7 @@ function checkCollisionByAxis(axis, object1, object2) {
 
     var delta = pos2 - pos1;
 
-    return (delta > 0 && delta < object1.width || delta < 0 && -delta < object2.width);
+    return (delta > 0 && delta < size1 || delta < 0 && -delta < size2);
 }
 
 module.exports = GameObject;

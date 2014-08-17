@@ -23,7 +23,7 @@ function Bullet(initParams) {
         inMove: true
     });
 
-    this.player = initParams.player || null;
+    this.tank = initParams.tank || null;
 }
 
 Bullet.prototype = Object.create(GameObject.prototype);

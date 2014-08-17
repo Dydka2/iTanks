@@ -10,10 +10,9 @@ var PLAYER_COLORS = ['blue', 'green', 'red', 'yellow', 'brown', 'orange', 'purpl
  */
 function Player(initParams) {
     this.id = require('../uniqid').generate();
-    this.stats = {
-        kills: 0,
-        deaths: 0
-    };
+    this.kills = 0;
+    this.deaths = 0;
+
     this.inGame = false;
     this.tank = null;
 

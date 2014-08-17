@@ -28,6 +28,7 @@ var TANK_TYPES = [
 /**
  * @param {Object} initParams
  * @param {number} initParams.tankType
+ * @param {Player} [initParams.player]
  * @constructor
  */
 function Tank(initParams) {
@@ -39,6 +40,7 @@ function Tank(initParams) {
     this.hp = 0;
     this.lastShootTS = 0;
     this.isDead = true;
+    this.player = initParams.player || null;
 
     var tankProto = TANK_TYPES[initParams.tankType];
 
@@ -60,7 +62,7 @@ Tank.prototype.tryShoot = function() {
         var bullet = new Bullet({
             position: this.position,
             direction: this.direction,
-            player: this.player
+            tank: this
         });
 
         bullet.moveForward(this.size[1] * 0.55);
@@ -78,6 +80,10 @@ Tank.prototype.decreaseHp = function() {
         this.hp--;
 
         this.emit('updateHealth', this.hp);
+    }
+
+    if (this.hp <= 0) {
+        this.isDead = true;
     }
 
     return this.hp;

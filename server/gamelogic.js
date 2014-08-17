@@ -1,5 +1,5 @@
 
-var EPSILON = 0.001;
+var EPSILON = 0.01;
 var PLAYER_RESPAWN_INTERVAL = 3000;
 var PLAYER_RESPAWN_TRY_INTERVAL = 100;
 
@@ -131,6 +131,11 @@ GameLogic.prototype.onConnect = function(socket) {
             that._players.splice(index, 1);
         }
 
+        index = that._tanks.indexOf(newPlayer.tank);
+        if (index !== -1) {
+            that._tanks.splice(index, 1);
+        }
+
         that.broadcast({
             event: 'playerLeft',
             data: {
@@ -164,7 +169,9 @@ GameLogic.prototype.setRespawnTankTimer = function(tank, time) {
             }
         }
 
+        tank.hp = tank.baseHp;
         tank.isDead = false;
+
     }, time);
 };
 
@@ -226,7 +233,7 @@ GameLogic.prototype.updateWorld = function() {
 
                 var otherTank = this._tanks[j];
 
-                if (tank.checkCollision(otherTank)) {
+                if (!otherTank.isDead && tank.checkCollision(otherTank)) {
 
                     if (tank.direction === 0 || tank.direction === 2) {
                         axis = 1;
@@ -249,19 +256,23 @@ GameLogic.prototype.updateWorld = function() {
 
             bullet = this._bullets[j];
 
+            if (tank === bullet.tank) {
+                continue;
+            }
+
             if (tank.checkCollision(bullet)) {
 
                 if (tank.decreaseHp() === 0) {
 
                     this.setRespawnTankTimer(tank, PLAYER_RESPAWN_INTERVAL);
 
-                    bullet.player.kills++;
+                    bullet.tank.player.kills++;
 
                     this.broadcast({
                         event: 'playerDeath',
                         data: {
                             dead: tank.player.id,
-                            killer: bullet.player.id
+                            killer: bullet.tank.player.id
                         }
                     });
 
