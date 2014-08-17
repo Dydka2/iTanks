@@ -90,13 +90,19 @@ Player.prototype._addEventListeners = function() {
 
             case 'updateState':
                 if (that.tank) {
-                    that.tank.direction = data.direction;
-                    that.tank.inMove = data.inMove;
-                }
-                break;
 
-            case 'shoot':
-                that.tank.tryShoot();
+                    if ('direction' in data && !isNaN(data.direction)) {
+                        that.tank.direction = data.direction;
+                    }
+
+                    if (typeof data.inMove === 'boolean') {
+                        that.tank.inMove = data.inMove;
+                    }
+
+                    if (typeof data.shooting === 'boolean') {
+                        that.tank.isShooting = data.shooting;
+                    }
+                }
                 break;
 
             default:

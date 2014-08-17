@@ -328,6 +328,12 @@ GameLogic.prototype.updateWorld = function() {
         }
     }
 
+    for (i = 0; i < this._tanks.length; ++i) {
+        if (this._tanks[i].isShooting) {
+            this._tanks[i].tryShoot();
+        }
+    }
+
     this.lastWorldUpdateTS = startTS;
 
     var nextTick = GAME_LOGIC_INTERVAL - (new Date().getTime() - startTS);
