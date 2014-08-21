@@ -9,6 +9,7 @@ var _ = require('lodash');
  * @param {boolean} [initParams.inMove=false] находится ли в движении
  * @param {Number} [initParams.direction=0] направление (0 - верх, 1 - право, 2 - низ, 3 - лево).
  * @param {Number} [initParams.speed=0] скорость движения
+ * @extends EventEmitter
  * @constructor
  */
 function GameObject(initParams) {

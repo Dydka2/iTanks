@@ -29,6 +29,7 @@ var TANK_TYPES = [
  * @param {Object} initParams
  * @param {number} initParams.tankType
  * @param {Player} [initParams.player]
+ * @extends GameObject
  * @constructor
  */
 function Tank(initParams) {

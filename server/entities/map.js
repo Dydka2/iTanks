@@ -5,6 +5,7 @@ var _ = require('lodash');
  * Создает инстанс определенной карты.
  * @param {Object} initParams
  * @param {number} initParams.mapNumber
+ * @extends EventEmitter
  * @constructor
  */
 function Map(initParams) {

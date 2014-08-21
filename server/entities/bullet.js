@@ -10,6 +10,7 @@ var BULLET_SIZE = [0.35, 0.5];
  * @param {number} [initParams.direction=0]
  * @param {Array} [initParams.position=[0,0]]
  * @param {Object} [initParams.player]
+ * @extends GameObject
  * @constructor
  */
 function Bullet(initParams) {

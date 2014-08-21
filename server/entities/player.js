@@ -6,6 +6,7 @@ var PLAYER_COLORS = ['blue', 'green', 'red', 'yellow', 'brown', 'orange', 'purpl
 /**
  * @param {Object} initParams
  * @param {WebSocket} initParams.socket
+ * @extends EventEmitter
  * @constructor
  */
 function Player(initParams) {
