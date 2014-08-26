@@ -1,5 +1,6 @@
 var gulp = require('gulp');
 var stylus = require('gulp-stylus');
+var browserify = require('gulp-browserify');
 
 gulp.task('css', function() {
     return gulp.src('client/*.styl')
@@ -20,6 +21,3 @@ gulp.task('default', ['css', 'ui']);
 gulp.task('watch', ['default'], function() {
     gulp.watch('client/*.styl', ['css']);
 });
-
-var browserify = require('gulp-browserify');
-
